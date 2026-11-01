@@ -91,6 +91,7 @@ export default function App() {
             onSelectBike={handleSelectBike}
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
+            onShowToast={showToast}
           />
         )}
 
@@ -99,6 +100,7 @@ export default function App() {
             onSelectBike={handleSelectBike}
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
+            onShowToast={showToast}
             initialCategory={catalogCategory}
           />
         )}
@@ -110,6 +112,7 @@ export default function App() {
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
             onSelectBike={handleSelectBike}
+            onShowToast={showToast}
           />
         )}
 

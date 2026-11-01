@@ -1,17 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, Zap, Cog, Fuel, MessageCircle, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BIKES_DATA, CATEGORIES_DATA } from '../data/bikes';
+import BookDropdown from '../components/BookDropdown';
 
 export default function MotorbikesPage({ 
   onSelectBike, 
   onStartBooking, 
   onOpenWhatsApp,
+  onShowToast,
   initialCategory = 'all'
 }) {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
+  const [openDropdownBikeId, setOpenDropdownBikeId] = useState(null);
   const itemsPerPage = 6;
 
   const filteredBikes = useMemo(() => {
@@ -152,7 +155,11 @@ export default function MotorbikesPage({
         ) : (
           <div className="bikes-grid">
             {paginatedBikes.map((bike) => (
-              <div key={bike.id} className="bike-card">
+              <div 
+                key={bike.id} 
+                className="bike-card"
+                style={{ zIndex: openDropdownBikeId === bike.id ? 200 : 1 }}
+              >
                 <div className="bike-card-image-wrap">
                   <img src={bike.image} alt={bike.name} className="bike-card-image" />
                   <span className={`bike-badge ${bike.statusBadge === 'AVAILABLE' ? 'available' : 'limited'}`}>
@@ -196,21 +203,22 @@ export default function MotorbikesPage({
                       <MessageCircle size={16} />
                       <span>Enquire Now</span>
                     </button>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'start' }}>
                       <button 
                         className="btn-card-action btn-outline"
                         onClick={() => onSelectBike(bike)}
                       >
                         <span>View Details</span>
                       </button>
-                      <button 
-                        className="btn-card-action btn-outline"
-                        style={{ borderColor: '#00A3FF', color: '#00A3FF' }}
-                        onClick={() => onStartBooking(bike)}
-                      >
-                        <span>Book</span>
-                        <ArrowRight size={14} />
-                      </button>
+                      <BookDropdown
+                        bike={bike}
+                        buttonText="Book"
+                        size="compact"
+                        isOpen={openDropdownBikeId === bike.id}
+                        onToggle={(open) => setOpenDropdownBikeId(open ? bike.id : null)}
+                        onShowToast={onShowToast}
+                        onStartBooking={onStartBooking}
+                      />
                     </div>
                   </div>
                 </div>

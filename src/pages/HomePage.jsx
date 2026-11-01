@@ -17,14 +17,17 @@ import {
   Sparkles
 } from 'lucide-react';
 import { BIKES_DATA, CATEGORIES_DATA, FAQS_DATA, TESTIMONIALS_DATA } from '../data/bikes';
+import BookDropdown from '../components/BookDropdown';
 
 export default function HomePage({ 
   onNavigate, 
   onSelectBike, 
   onStartBooking, 
-  onOpenWhatsApp 
+  onOpenWhatsApp,
+  onShowToast
 }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [openDropdownBikeId, setOpenDropdownBikeId] = useState(null);
 
   const toggleFaq = (index) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -145,7 +148,11 @@ export default function HomePage({
 
           <div className="bikes-grid">
             {featuredBikes.map((bike) => (
-              <div key={bike.id} className="bike-card">
+              <div 
+                key={bike.id} 
+                className="bike-card"
+                style={{ zIndex: openDropdownBikeId === bike.id ? 200 : 1 }}
+              >
                 <div className="bike-card-image-wrap">
                   <img src={bike.image} alt={bike.name} className="bike-card-image" />
                   <span className={`bike-badge ${bike.badgeType}`}>
@@ -177,13 +184,14 @@ export default function HomePage({
                   </div>
 
                   <div className="bike-card-actions">
-                    <button 
-                      className="btn-card-action btn-primary"
-                      onClick={() => onStartBooking(bike)}
-                    >
-                      <span>Book Now</span>
-                      <ArrowRight size={16} />
-                    </button>
+                    <BookDropdown
+                      bike={bike}
+                      buttonText="Book this bike"
+                      isOpen={openDropdownBikeId === bike.id}
+                      onToggle={(open) => setOpenDropdownBikeId(open ? bike.id : null)}
+                      onShowToast={onShowToast}
+                      onStartBooking={onStartBooking}
+                    />
                     <button 
                       className="btn-card-action btn-outline"
                       onClick={() => onSelectBike(bike)}

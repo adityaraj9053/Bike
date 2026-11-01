@@ -15,13 +15,15 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
+import BookDropdown from '../components/BookDropdown';
 
 export default function BikeDetailsPage({ 
   bike = BIKES_DATA[0], 
   onNavigate, 
   onStartBooking, 
   onOpenWhatsApp, 
-  onSelectBike 
+  onSelectBike,
+  onShowToast
 }) {
   const [activeImage, setActiveImage] = useState(bike.image);
 
@@ -85,12 +87,18 @@ export default function BikeDetailsPage({
 
             {/* Price Card */}
             <div className="details-price-card">
-              <div className="details-price-row">
+              <div className="details-price-row" style={{ alignItems: 'flex-start' }}>
                 <div>
-                  <span className="bike-price" style={{ fontSize: '2.4rem' }}>
-                    ₹{bike.pricePerDay.toLocaleString()}
-                  </span>
-                  <span className="bike-price-unit" style={{ fontSize: '1rem' }}> / day</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                    <span style={{ fontSize: '1.25rem', color: '#cbd5e1', fontWeight: 500 }}>from</span>
+                    <span style={{ fontSize: '2.6rem', fontWeight: 800, color: '#FF3B30', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>
+                      ${Math.round(bike.pricePerDay / 50)}
+                    </span>
+                    <span style={{ fontSize: '1rem', color: '#94A3B8' }}>/ day</span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '4px' }}>
+                    (₹{bike.pricePerDay.toLocaleString()} INR / day)
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.78rem', color: '#94A3B8', textTransform: 'uppercase' }}>Refundable Deposit</span>
@@ -111,15 +119,13 @@ export default function BikeDetailsPage({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '12px' }}>
-                <button
-                  className="btn-primary"
-                  style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '1rem' }}
-                  onClick={() => onStartBooking(bike)}
-                >
-                  <span>Book Now</span>
-                  <ArrowRight size={18} />
-                </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '12px', alignItems: 'start' }}>
+                <BookDropdown
+                  bike={bike}
+                  buttonText="Book this bike"
+                  onShowToast={onShowToast}
+                  onStartBooking={onStartBooking}
+                />
                 <button
                   className="btn-whatsapp-dark"
                   style={{ width: '100%', justifyContent: 'center', padding: '14px' }}
