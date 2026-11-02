@@ -1,4 +1,6 @@
-export const BIKES_DATA = [
+import { resolveImage } from '../assets/images';
+
+export const RAW_BIKES_DATA = [
   {
     id: "night-hawk-cruiser",
     name: "Night Hawk Cruiser",
@@ -282,6 +284,13 @@ export const BIKES_DATA = [
   }
 ];
 
+// Enrich bikes with React Native image sources
+export const BIKES_DATA = RAW_BIKES_DATA.map((bike) => ({
+  ...bike,
+  imageSource: resolveImage(bike.image),
+  gallerySources: (bike.gallery || [bike.image]).map((img) => resolveImage(img)),
+}));
+
 export const CATEGORIES_DATA = [
   {
     id: "all",
@@ -293,6 +302,7 @@ export const CATEGORIES_DATA = [
     label: "Scooters",
     categoryKey: "scooters",
     image: "/images/scooter.jpg",
+    imageSource: resolveImage('/images/scooter.jpg'),
     description: "Lightweight, automatic, and perfect for city traffic."
   },
   {
@@ -300,6 +310,7 @@ export const CATEGORIES_DATA = [
     label: "Commuter Bikes",
     categoryKey: "commuter",
     image: "/images/commuter.jpg",
+    imageSource: resolveImage('/images/commuter.jpg'),
     description: "Budget-friendly everyday workhorses with great mileage."
   },
   {
@@ -307,6 +318,7 @@ export const CATEGORIES_DATA = [
     label: "Cruiser Bikes",
     categoryKey: "cruiser",
     image: "/images/night-hawk-cruiser.jpg",
+    imageSource: resolveImage('/images/night-hawk-cruiser.jpg'),
     description: "Low-slung comfort engineered for long open highway trips."
   },
   {
@@ -314,6 +326,7 @@ export const CATEGORIES_DATA = [
     label: "Premium Bikes",
     categoryKey: "premium",
     image: "/images/phantom-sport.jpg",
+    imageSource: resolveImage('/images/phantom-sport.jpg'),
     description: "High performance racing superbikes with pure power."
   }
 ];

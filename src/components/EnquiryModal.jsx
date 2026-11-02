@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageCircle, Send, CheckCircle2, Calendar, Phone, User } from 'lucide-react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  ScrollView,
+  Linking,
+} from 'react-native';
+import { X, MessageCircle, Send, CheckCircle2 } from 'lucide-react-native';
 import { BIKES_DATA } from '../data/bikes';
+import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
 
-export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToast }) {
-  const [bikeId, setBikeId] = useState(selectedBike?.id || 'night-hawk-cruiser');
+export default function EnquiryModal({
+  visible,
+  onClose,
+  selectedBike,
+  onShowToast,
+}) {
+  const [bikeId, setBikeId] = useState(selectedBike?.id || BIKES_DATA[0].id);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -17,8 +34,6 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
     }
   }, [selectedBike]);
 
-  if (!isOpen) return null;
-
   const currentBike = BIKES_DATA.find((b) => b.id === bikeId) || BIKES_DATA[0];
 
   const handleWhatsAppRedirect = () => {
@@ -29,15 +44,16 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
       `Phone: ${phone || 'Not provided'}\n` +
       (message ? `Note: ${message}` : '')
     );
-    window.open(`https://api.whatsapp.com/send?phone=919876543210&text=${text}`, '_blank');
-    onShowToast(`Redirecting to WhatsApp for ${currentBike.name} enquiry!`);
+    Linking.openURL(`https://wa.me/919876543210?text=${text}`).catch(() => {});
+    if (onShowToast) onShowToast(`Redirecting to WhatsApp for ${currentBike.name}!`);
     onClose();
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     setSubmitted(true);
-    onShowToast(`Enquiry received for ${currentBike.name}! Our team will call you at ${phone || 'your number'} shortly.`);
+    if (onShowToast) {
+      onShowToast(`Enquiry received for ${currentBike.name}! Our team will call you shortly.`);
+    }
     setTimeout(() => {
       setSubmitted(false);
       onClose();
@@ -45,137 +61,310 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={onClose}>
-          <X size={18} />
-        </button>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.modalCard, SHADOWS.card]}>
+              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                <X size={18} color={COLORS.textSecondary} />
+              </TouchableOpacity>
 
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{
-            width: '52px',
-            height: '52px',
-            background: 'rgba(0, 163, 255, 0.15)',
-            color: '#00A3FF',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px'
-          }}>
-            <MessageCircle size={26} />
-          </div>
-          <h3 style={{ fontSize: '1.6rem', marginBottom: '6px' }}>Enquire on WhatsApp</h3>
-          <p style={{ color: '#94A3B8', fontSize: '0.9rem' }}>
-            Instant response from our rental concierge team (+91 98765 43210)
-          </p>
-        </div>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Header */}
+                <View style={styles.header}>
+                  <View style={styles.iconCircle}>
+                    <MessageCircle size={26} color={COLORS.accentCyan} />
+                  </View>
+                  <Text style={styles.title}>Enquire on WhatsApp</Text>
+                  <Text style={styles.subtitle}>
+                    Instant response from our concierge (+91 98765 43210)
+                  </Text>
+                </View>
 
-        {submitted ? (
-          <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 16px' }} />
-            <h4 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>Enquiry Submitted!</h4>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem' }}>
-              We have received your enquiry for <strong>{currentBike.name}</strong>. An agent will connect with you right away.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label">Preferred Bike</label>
-              <select
-                className="form-select"
-                value={bikeId}
-                onChange={(e) => setBikeId(e.target.value)}
-              >
-                {BIKES_DATA.map((bike) => (
-                  <option key={bike.id} value={bike.id}>
-                    {bike.name} ({bike.model}) - ₹{bike.pricePerDay}/day
-                  </option>
-                ))}
-              </select>
-            </div>
+                {submitted ? (
+                  <View style={styles.submittedWrap}>
+                    <CheckCircle2 size={48} color={COLORS.statusAvailable} />
+                    <Text style={styles.submittedTitle}>Enquiry Submitted!</Text>
+                    <Text style={styles.submittedSubtitle}>
+                      We have received your enquiry for {currentBike.name}. A representative will connect with you right away.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.form}>
+                    {/* Bike Selector Chips */}
+                    <Text style={styles.label}>Select Motorcycle</Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.bikeChipsScroll}
+                      contentContainerStyle={styles.bikeChipsContent}
+                    >
+                      {BIKES_DATA.map((b) => {
+                        const active = b.id === bikeId;
+                        return (
+                          <TouchableOpacity
+                            key={b.id}
+                            style={[styles.bikeChip, active && styles.bikeChipActive]}
+                            onPress={() => setBikeId(b.id)}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={[styles.bikeChipText, active && styles.bikeChipTextActive]}>
+                              {b.name} (₹{b.pricePerDay})
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Enter name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Phone Number</label>
-                <input
-                  type="tel"
-                  className="form-input"
-                  placeholder="+91 98765 00000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+                    {/* Rider info */}
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Full Name</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Your name"
+                        placeholderTextColor={COLORS.textMuted}
+                        value={fullName}
+                        onChangeText={setFullName}
+                      />
+                    </View>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group">
-                <label className="form-label">Start Date</label>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">End Date</label>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Contact Phone Number</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="+91 98765 43210"
+                        placeholderTextColor={COLORS.textMuted}
+                        keyboardType="phone-pad"
+                        value={phone}
+                        onChangeText={setPhone}
+                      />
+                    </View>
 
-            <div className="form-group">
-              <label className="form-label">Message / Questions (Optional)</label>
-              <textarea
-                rows="2"
-                className="form-textarea"
-                placeholder="Any special requests or queries..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              ></textarea>
-            </div>
+                    {/* Dates */}
+                    <View style={styles.datesRow}>
+                      <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.label}>Start Date</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="YYYY-MM-DD"
+                          placeholderTextColor={COLORS.textMuted}
+                          value={startDate}
+                          onChangeText={setStartDate}
+                        />
+                      </View>
+                      <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.label}>End Date</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="YYYY-MM-DD"
+                          placeholderTextColor={COLORS.textMuted}
+                          value={endDate}
+                          onChangeText={setEndDate}
+                        />
+                      </View>
+                    </View>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-              <button
-                type="button"
-                className="btn-whatsapp"
-                style={{ width: '100%', padding: '13px', justifyContent: 'center', fontSize: '0.95rem' }}
-                onClick={handleWhatsAppRedirect}
-              >
-                <MessageCircle size={18} />
-                <span>Open WhatsApp Chat Directly</span>
-              </button>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Questions or Delivery Requirements</Text>
+                      <TextInput
+                        style={[styles.input, styles.textArea]}
+                        placeholder="Need doorstep delivery, extra helmets, or custom touring duration..."
+                        placeholderTextColor={COLORS.textMuted}
+                        multiline
+                        numberOfLines={3}
+                        value={message}
+                        onChangeText={setMessage}
+                      />
+                    </View>
 
-              <button
-                type="submit"
-                className="btn-outline"
-                style={{ width: '100%', padding: '12px', justifyContent: 'center' }}
-              >
-                <Send size={16} />
-                <span>Submit Form Instead</span>
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+                    {/* WhatsApp CTA Button */}
+                    <TouchableOpacity
+                      style={styles.whatsAppBtn}
+                      onPress={handleWhatsAppRedirect}
+                      activeOpacity={0.8}
+                    >
+                      <MessageCircle size={18} color="#050B14" />
+                      <Text style={styles.whatsAppBtnText}>Send Enquiry on WhatsApp</Text>
+                    </TouchableOpacity>
+
+                    {/* Direct Submit */}
+                    <TouchableOpacity
+                      style={styles.submitBtn}
+                      onPress={handleSubmit}
+                      activeOpacity={0.8}
+                    >
+                      <Send size={16} color={COLORS.accentCyan} />
+                      <Text style={styles.submitBtnText}>Submit Lead Directly</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: COLORS.bgOverlay,
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.borderCard,
+    padding: 20,
+    maxHeight: '92%',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.bgCardAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(0, 163, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  form: {
+    gap: 14,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 6,
+  },
+  bikeChipsScroll: {
+    marginBottom: 6,
+  },
+  bikeChipsContent: {
+    gap: 8,
+  },
+  bikeChip: {
+    backgroundColor: COLORS.bgCardAlt,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: RADIUS.full,
+  },
+  bikeChipActive: {
+    backgroundColor: COLORS.accentCyan,
+    borderColor: COLORS.accentCyan,
+  },
+  bikeChipText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  bikeChipTextActive: {
+    color: '#050B14',
+    fontWeight: '700',
+  },
+  inputGroup: {},
+  input: {
+    backgroundColor: COLORS.bgCardAlt,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: COLORS.textPrimary,
+    fontSize: 13,
+  },
+  textArea: {
+    height: 70,
+    textAlignVertical: 'top',
+  },
+  datesRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  whatsAppBtn: {
+    backgroundColor: COLORS.accentCyan,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: RADIUS.full,
+    paddingVertical: 13,
+    marginTop: 6,
+  },
+  whatsAppBtnText: {
+    color: '#050B14',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  submitBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.borderCard,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: RADIUS.full,
+    paddingVertical: 11,
+  },
+  submitBtnText: {
+    color: COLORS.accentCyan,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  submittedWrap: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    gap: 10,
+  },
+  submittedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  submittedSubtitle: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 16,
+  },
+});
