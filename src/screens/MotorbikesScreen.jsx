@@ -17,6 +17,7 @@ export default function MotorbikesScreen({
   navigation,
   route,
   onSelectBike,
+  onStartBooking,
   onOpenBookModal,
 }) {
   const initialCategory = route?.params?.initialCategory || 'all';
@@ -189,6 +190,7 @@ export default function MotorbikesScreen({
               if (onSelectBike) onSelectBike(b);
               navigation.navigate('BikeDetails', { bike: b });
             }}
+            onStartBooking={onStartBooking}
             onOpenBookModal={onOpenBookModal}
             compact={isCompact}
             style={{ width: cardWidth, marginBottom: 0 }}

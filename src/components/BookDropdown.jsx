@@ -93,7 +93,11 @@ export default function BookDropdown({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          toggleDropdown(!isOpen);
+          if (onStartBooking && bike) {
+            onStartBooking(bike);
+          } else {
+            toggleDropdown(!isOpen);
+          }
         }}
         style={{
           background: '#FF3B30',

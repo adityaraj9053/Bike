@@ -14,7 +14,8 @@ import AboutUsPage from './pages/AboutUsPage';
 import ContactPage from './pages/ContactPage';
 
 import { BIKES_DATA } from './data/bikes';
-import { MessageCircle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
@@ -80,6 +81,7 @@ export default function App() {
         setActivePage={handleNavigate}
         onOpenWhatsApp={() => handleOpenWhatsApp()}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onStartBooking={() => handleStartBooking(selectedBike)}
         user={user}
       />
 
@@ -153,23 +155,23 @@ export default function App() {
           bottom: '24px',
           left: '24px',
           zIndex: 999,
-          background: '#00A3FF',
-          color: '#060C18',
-          width: '54px',
-          height: '54px',
+          background: '#25D366',
+          color: '#ffffff',
+          width: '56px',
+          height: '56px',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 6px 24px rgba(0, 163, 255, 0.45)',
+          boxShadow: '0 6px 24px rgba(37, 211, 102, 0.45)',
           cursor: 'pointer',
           transition: 'transform 0.2s ease, background 0.2s ease'
         }}
         title="Chat on WhatsApp"
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.background = '#25D366'; e.currentTarget.style.color = '#fff'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = '#00A3FF'; e.currentTarget.style.color = '#060C18'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
       >
-        <MessageCircle size={26} />
+        <FaWhatsapp size={28} />
       </div>
 
       {/* Interactive Modals */}

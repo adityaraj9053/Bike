@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Compass, MessageCircle, User, ChevronLeft } from 'lucide-react-native';
+import { Compass, User, ChevronLeft } from 'lucide-react-native';
 import { COLORS, RADIUS } from '../theme/colors';
 
 export default function CustomHeader({
@@ -10,6 +10,7 @@ export default function CustomHeader({
   user,
   onOpenAuth,
   onOpenWhatsApp,
+  onStartBooking,
 }) {
   return (
     <View style={styles.headerContainer}>
@@ -43,13 +44,19 @@ export default function CustomHeader({
       </View>
 
       <View style={styles.headerRight}>
-        {/* Quick WhatsApp Action */}
+        {/* Quick Book Action */}
         <TouchableOpacity
-          style={styles.headerWhatsAppBtn}
-          onPress={onOpenWhatsApp}
+          style={styles.headerBookBtn}
+          onPress={() => {
+            if (onStartBooking) {
+              onStartBooking();
+            } else if (navigation) {
+              navigation.navigate('Booking');
+            }
+          }}
           activeOpacity={0.8}
         >
-          <MessageCircle size={18} color={COLORS.accentCyan} />
+          <Text style={styles.headerBookBtnText}>Book</Text>
         </TouchableOpacity>
 
         {/* User Account Button */}
@@ -123,15 +130,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  headerWhatsAppBtn: {
-    width: 36,
-    height: 36,
+  headerBookBtn: {
+    backgroundColor: COLORS.accentRed,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(0, 163, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 163, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: COLORS.accentRed,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerBookBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   userButton: {
     flexDirection: 'row',

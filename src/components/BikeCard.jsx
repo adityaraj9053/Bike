@@ -13,6 +13,7 @@ export default function BikeCard({
   bike,
   onSelectBike,
   onOpenBookModal,
+  onStartBooking,
   style,
   compact = false,
 }) {
@@ -128,7 +129,13 @@ export default function BikeCard({
           {/* Red Action Button */}
           <TouchableOpacity
             style={[styles.bookBtn, compact && styles.bookBtnCompact, SHADOWS.glowRed]}
-            onPress={() => onOpenBookModal(bike)}
+            onPress={() => {
+              if (onStartBooking) {
+                onStartBooking(bike);
+              } else if (onOpenBookModal) {
+                onOpenBookModal(bike);
+              }
+            }}
             activeOpacity={0.8}
           >
             <Text style={[styles.bookBtnText, compact && styles.bookBtnTextCompact]}>Book</Text>

@@ -50,8 +50,7 @@ export default function App() {
   };
 
   const handleOpenBookModal = (bike) => {
-    setBookModalBike(bike);
-    setIsBookModalOpen(true);
+    handleStartBooking(bike);
   };
 
   const handleStartBooking = (bike) => {

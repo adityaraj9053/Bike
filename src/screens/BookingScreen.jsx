@@ -8,10 +8,15 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  useWindowDimensions,
+  Modal,
+  Platform,
 } from 'react-native';
 import {
+  Calendar,
   Clock,
-  MapPin,
+  Info,
+  ChevronDown,
   Check,
   CheckCircle2,
   ShieldCheck,
@@ -21,10 +26,27 @@ import {
   MessageCircle,
   ArrowRight,
   ArrowLeft,
-  Bike,
+  X,
 } from 'lucide-react-native';
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+
+const PICKUP_TIMES = [
+  '09:00 AM (Hub Opens)',
+  '10:00 AM',
+  '11:00 AM',
+  '12:00 PM',
+  '02:00 PM',
+  '04:00 PM',
+];
+
+const RETURN_TIMES = [
+  '06:00 PM',
+  '07:00 PM',
+  '08:00 PM (Hub Closes)',
+  '09:00 PM',
+  '10:00 PM',
+];
 
 export default function BookingScreen({
   route,
@@ -36,14 +58,19 @@ export default function BookingScreen({
   const selectedBike = route?.params?.bike || BIKES_DATA[0];
   const [step, setStep] = useState(1);
 
-  // Dates & Times
-  const [pickupDate, setPickupDate] = useState('2024-11-15');
-  const [pickupTime, setPickupTime] = useState('09:00 AM');
-  const [returnDate, setReturnDate] = useState('2024-11-17');
-  const [returnTime, setReturnTime] = useState('08:00 PM');
-  const [pickupLocation, setPickupLocation] = useState('hub'); // 'hub' or 'doorstep'
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
 
-  // Rider details
+  // Dates & Times (matching user reference mockup)
+  const [pickupDate, setPickupDate] = useState('11/15/2024');
+  const [pickupTime, setPickupTime] = useState('09:00 AM (Hub Opens)');
+  const [returnDate, setReturnDate] = useState('11/17/2024');
+  const [returnTime, setReturnTime] = useState('08:00 PM (Hub Closes)');
+
+  // Dropdown modal state
+  const [activePicker, setActivePicker] = useState(null); // 'pickup' | 'return' | null
+
+  // Rider details for step 2
   const [riderName, setRiderName] = useState('Rahul Verma');
   const [riderPhone, setRiderPhone] = useState('+91 98765 43210');
   const [riderEmail, setRiderEmail] = useState('rahul.verma@example.com');
@@ -53,18 +80,28 @@ export default function BookingScreen({
   // Calculate rental duration in days
   const rentalDays = useMemo(() => {
     try {
-      const start = new Date(pickupDate);
-      const end = new Date(returnDate);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? diffDays + 1 : 1;
+      const parse = (str) => {
+        if (!str) return null;
+        if (str.includes('/')) {
+          const parts = str.split('/');
+          if (parts.length === 3) {
+            return new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+          }
+        }
+        return new Date(str);
+      };
+      const d1 = parse(pickupDate);
+      const d2 = parse(returnDate);
+      const diffMs = Math.abs(d2.getTime() - d1.getTime());
+      const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      return days > 0 ? days + 1 : 3;
     } catch {
       return 3;
     }
   }, [pickupDate, returnDate]);
 
   const rentalTotal = rentalDays * selectedBike.pricePerDay;
-  const securityDeposit = selectedBike.deposit;
+  const securityDeposit = selectedBike.deposit || 3000;
   const totalPayable = rentalTotal + securityDeposit;
   const [bookingRefId] = useState(() => 'RDE-' + Math.floor(100000 + Math.random() * 900000));
 
@@ -101,398 +138,471 @@ export default function BookingScreen({
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* Stepper Header */}
-      <View style={styles.stepperContainer}>
-        <View style={styles.stepIndicator}>
-          <View style={[styles.stepBadge, step >= 1 && styles.stepBadgeActive]}>
-            {step > 1 ? (
-              <Check size={14} color="#050B14" strokeWidth={3} />
-            ) : (
-              <Text style={styles.stepBadgeText}>1</Text>
-            )}
-          </View>
-          <Text style={[styles.stepLabel, step >= 1 && styles.stepLabelActive]}>
-            DATES
-          </Text>
-        </View>
-
-        <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
-
-        <View style={styles.stepIndicator}>
-          <View style={[styles.stepBadge, step >= 2 && styles.stepBadgeActive]}>
-            {step > 2 ? (
-              <Check size={14} color="#050B14" strokeWidth={3} />
-            ) : (
-              <Text style={styles.stepBadgeText}>2</Text>
-            )}
-          </View>
-          <Text style={[styles.stepLabel, step >= 2 && styles.stepLabelActive]}>
-            SUMMARY
-          </Text>
-        </View>
-
-        <View style={[styles.stepLine, step === 3 && styles.stepLineActive]} />
-
-        <View style={styles.stepIndicator}>
-          <View style={[styles.stepBadge, step === 3 && styles.stepBadgeActive]}>
-            <Text style={styles.stepBadgeText}>3</Text>
-          </View>
-          <Text style={[styles.stepLabel, step === 3 && styles.stepLabelActive]}>
-            CONFIRM
-          </Text>
-        </View>
-      </View>
-
-      {/* Selected Bike Mini Banner */}
-      <View style={styles.bikeMiniBanner}>
-        <Image source={selectedBike.imageSource} style={styles.bikeMiniImg} />
-        <View style={styles.bikeMiniInfo}>
-          <Text style={styles.bikeMiniName}>{selectedBike.name}</Text>
-          <Text style={styles.bikeMiniModel}>{selectedBike.model}</Text>
-          <Text style={styles.bikeMiniPrice}>₹{selectedBike.pricePerDay} / day</Text>
-        </View>
-      </View>
-
-      {/* ================= STEP 1: DATE & TIME SELECTION ================= */}
-      {step === 1 && (
-        <View style={styles.stepCard}>
-          <Text style={styles.cardTitle}>Choose Rental Period</Text>
-          <Text style={styles.cardSubtitle}>
-            Minimum duration is 24 hours. Free cancellation up to 6 hours before pickup.
-          </Text>
-
-          {/* Pickup */}
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionHeading}>Pickup Details</Text>
-            <View style={styles.rowInputs}>
-              <View style={[styles.inputWrap, { flex: 1.2 }]}>
-                <Text style={styles.inputLabel}>Pickup Date</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={pickupDate}
-                  onChangeText={setPickupDate}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={COLORS.textMuted}
-                />
-              </View>
-              <View style={[styles.inputWrap, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>Pickup Time</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={pickupTime}
-                  onChangeText={setPickupTime}
-                  placeholder="09:00 AM"
-                  placeholderTextColor={COLORS.textMuted}
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Return */}
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionHeading}>Drop-off Details</Text>
-            <View style={styles.rowInputs}>
-              <View style={[styles.inputWrap, { flex: 1.2 }]}>
-                <Text style={styles.inputLabel}>Return Date</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={returnDate}
-                  onChangeText={setReturnDate}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={COLORS.textMuted}
-                />
-              </View>
-              <View style={[styles.inputWrap, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>Return Time</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={returnTime}
-                  onChangeText={setReturnTime}
-                  placeholder="08:00 PM"
-                  placeholderTextColor={COLORS.textMuted}
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Pickup Method */}
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionHeading}>Delivery / Pickup Hub</Text>
-            <View style={styles.locationPills}>
-              <TouchableOpacity
-                style={[
-                  styles.locationPill,
-                  pickupLocation === 'hub' && styles.locationPillActive,
-                ]}
-                onPress={() => setPickupLocation('hub')}
-                activeOpacity={0.8}
-              >
-                <MapPin size={16} color={pickupLocation === 'hub' ? '#050B14' : COLORS.textSecondary} />
-                <Text
-                  style={[
-                    styles.locationPillText,
-                    pickupLocation === 'hub' && styles.locationPillTextActive,
-                  ]}
-                >
-                  Sector 5 Main Hub (Free)
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.locationPill,
-                  pickupLocation === 'doorstep' && styles.locationPillActive,
-                ]}
-                onPress={() => setPickupLocation('doorstep')}
-                activeOpacity={0.8}
-              >
-                <Bike size={16} color={pickupLocation === 'doorstep' ? '#050B14' : COLORS.textSecondary} />
-                <Text
-                  style={[
-                    styles.locationPillText,
-                    pickupLocation === 'doorstep' && styles.locationPillTextActive,
-                  ]}
-                >
-                  Doorstep Delivery (+₹200)
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Duration Summary Pill */}
-          <View style={styles.durationPill}>
-            <Clock size={16} color={COLORS.accentCyan} />
-            <Text style={styles.durationText}>
-              Total Rental Duration:{' '}
-              <Text style={{ fontWeight: '800', color: COLORS.accentCyan }}>
-                {rentalDays} Billing Days
-              </Text>{' '}
-              (Estimated ₹{rentalTotal.toLocaleString()})
-            </Text>
-          </View>
-
-          {/* Next Button */}
+      <View style={styles.pageInner}>
+        {/* ================= STEPPER HEADER ================= */}
+        <View style={styles.stepperContainer}>
           <TouchableOpacity
-            style={[styles.nextBtn, SHADOWS.glowCyan]}
-            onPress={() => setStep(2)}
-            activeOpacity={0.8}
+            style={styles.stepItem}
+            onPress={() => step > 1 && setStep(1)}
+            activeOpacity={step > 1 ? 0.7 : 1}
           >
-            <Text style={styles.nextBtnText}>Continue to Summary</Text>
-            <ArrowRight size={16} color="#050B14" strokeWidth={2.5} />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* ================= STEP 2: SUMMARY & PAYMENT ================= */}
-      {step === 2 && (
-        <View style={styles.stepCard}>
-          <Text style={styles.cardTitle}>Booking Summary & Details</Text>
-          <Text style={styles.cardSubtitle}>
-            Verify rider identity and select preferred payment channel.
-          </Text>
-
-          {/* Rental Breakdown Card */}
-          <View style={styles.breakdownCard}>
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>
-                Base Rental ({rentalDays} Days @ ₹{selectedBike.pricePerDay})
-              </Text>
-              <Text style={styles.breakdownVal}>₹{rentalTotal.toLocaleString()}</Text>
-            </View>
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Refundable Security Deposit*</Text>
-              <Text style={[styles.breakdownVal, { color: COLORS.accentCyan }]}>
-                ₹{securityDeposit.toLocaleString()}
-              </Text>
-            </View>
-            <View style={[styles.breakdownRow, styles.breakdownTotal]}>
-              <Text style={styles.totalLabel}>Total Amount Payable</Text>
-              <Text style={styles.totalVal}>₹{totalPayable.toLocaleString()}</Text>
-            </View>
-          </View>
-
-          {/* Rider Form */}
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionHeading}>Rider Contact Details</Text>
-            <View style={styles.inputWrap}>
-              <Text style={styles.inputLabel}>Full Legal Name</Text>
-              <TextInput
-                style={styles.textInput}
-                value={riderName}
-                onChangeText={setRiderName}
-                placeholder="Rider's full name"
-                placeholderTextColor={COLORS.textMuted}
-              />
-            </View>
-            <View style={[styles.inputWrap, { marginTop: 10 }]}>
-              <Text style={styles.inputLabel}>Mobile Phone Number</Text>
-              <TextInput
-                style={styles.textInput}
-                value={riderPhone}
-                onChangeText={setRiderPhone}
-                placeholder="+91 98765 43210"
-                placeholderTextColor={COLORS.textMuted}
-                keyboardType="phone-pad"
-              />
-            </View>
-            <View style={[styles.inputWrap, { marginTop: 10 }]}>
-              <Text style={styles.inputLabel}>Email Address</Text>
-              <TextInput
-                style={styles.textInput}
-                value={riderEmail}
-                onChangeText={setRiderEmail}
-                placeholder="email@example.com"
-                placeholderTextColor={COLORS.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          {/* Payment Method Selector */}
-          <View style={styles.inputSection}>
-            <Text style={styles.sectionHeading}>Select Payment Channel</Text>
-            <View style={styles.paymentOptions}>
-              <TouchableOpacity
-                style={[
-                  styles.paymentOption,
-                  paymentMethod === 'upi' && styles.paymentOptionActive,
-                ]}
-                onPress={() => setPaymentMethod('upi')}
-                activeOpacity={0.8}
-              >
-                <Smartphone size={20} color={paymentMethod === 'upi' ? COLORS.accentCyan : COLORS.textSecondary} />
-                <Text style={styles.paymentOptionText}>UPI / QR Code</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.paymentOption,
-                  paymentMethod === 'card' && styles.paymentOptionActive,
-                ]}
-                onPress={() => setPaymentMethod('card')}
-                activeOpacity={0.8}
-              >
-                <CreditCard size={20} color={paymentMethod === 'card' ? COLORS.accentCyan : COLORS.textSecondary} />
-                <Text style={styles.paymentOptionText}>Credit / Debit Card</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.paymentOption,
-                  paymentMethod === 'pickup' && styles.paymentOptionActive,
-                ]}
-                onPress={() => setPaymentMethod('pickup')}
-                activeOpacity={0.8}
-              >
-                <ShieldCheck size={20} color={paymentMethod === 'pickup' ? COLORS.accentCyan : COLORS.textSecondary} />
-                <Text style={styles.paymentOptionText}>Pay at Hub Pickup</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.step2Buttons}>
-            <TouchableOpacity
-              style={styles.backStepBtn}
-              onPress={() => setStep(1)}
-              activeOpacity={0.8}
-            >
-              <ArrowLeft size={16} color={COLORS.textSecondary} />
-              <Text style={styles.backStepText}>Back</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.payBtn, SHADOWS.glowRed]}
-              onPress={handleProceedPayment}
-              disabled={isProcessing}
-              activeOpacity={0.8}
-            >
-              {isProcessing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+            <View style={[styles.stepCircle, step >= 1 ? styles.stepCircleActive : styles.stepCircleInactive]}>
+              {step > 1 ? (
+                <Check size={14} color="#050B14" strokeWidth={3} />
               ) : (
-                <>
-                  <Text style={styles.payBtnText}>
-                    Confirm & Reserve (₹{totalPayable.toLocaleString()})
-                  </Text>
-                  <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
-                </>
+                <Text style={styles.stepCircleNumActive}>1</Text>
               )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* ================= STEP 3: CONFIRMATION ================= */}
-      {step === 3 && (
-        <View style={styles.stepCard}>
-          <View style={styles.successIconWrap}>
-            <CheckCircle2 size={54} color={COLORS.statusAvailable} />
-          </View>
-
-          <Text style={styles.successTitle}>Reservation Confirmed!</Text>
-          <Text style={styles.successSubtitle}>
-            Your booking reference is{' '}
-            <Text style={{ fontWeight: '800', color: COLORS.accentCyan }}>
-              #{bookingRefId}
+            </View>
+            <Text style={[styles.stepText, step === 1 ? styles.stepTextActive : styles.stepTextInactive]}>
+              DATE SELECTION
             </Text>
-          </Text>
+          </TouchableOpacity>
 
-          {/* Next Steps Box */}
-          <View style={styles.nextStepsCard}>
-            <Text style={styles.nextStepsTitle}>What Happens Next?</Text>
-            <View style={styles.nextStepItem}>
-              <Text style={styles.nextStepNumber}>1</Text>
-              <Text style={styles.nextStepText}>
-                Our concierge will verify vehicle schedule and call you within 15 minutes.
-              </Text>
+          <View style={[styles.stepDividerLine, step >= 2 && styles.stepDividerLineActive]} />
+
+          <View style={styles.stepItem}>
+            <View style={[styles.stepCircle, step >= 2 ? styles.stepCircleActive : styles.stepCircleInactive]}>
+              <Text style={step >= 2 ? styles.stepCircleNumActive : styles.stepCircleNumInactive}>2</Text>
             </View>
-            <View style={styles.nextStepItem}>
-              <Text style={styles.nextStepNumber}>2</Text>
-              <Text style={styles.nextStepText}>
-                Bring your original Driving Licence and Govt ID proof to vehicle pickup.
-              </Text>
-            </View>
-            <View style={styles.nextStepItem}>
-              <Text style={styles.nextStepNumber}>3</Text>
-              <Text style={styles.nextStepText}>
-                Complete 2-minute physical inspection, collect your helmet, and ride!
-              </Text>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.step3Actions}>
-            <TouchableOpacity
-              style={styles.whatsAppConfirmBtn}
-              onPress={() => onOpenWhatsApp(selectedBike)}
-              activeOpacity={0.8}
-            >
-              <MessageCircle size={18} color="#050B14" />
-              <Text style={styles.whatsAppConfirmText}>
-                Confirm Directly on WhatsApp
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.voucherBtn}
-              onPress={handleDownloadQuote}
-              activeOpacity={0.8}
-            >
-              <Download size={16} color={COLORS.accentCyan} />
-              <Text style={styles.voucherBtnText}>View Quotation Voucher</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.homeBtn}
-              onPress={() => navigation.navigate('Home')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.homeBtnText}>Back to Home Fleet</Text>
-            </TouchableOpacity>
+            <Text style={[styles.stepText, step >= 2 ? styles.stepTextActive : styles.stepTextInactive]}>
+              SUMMARY & PAYMENT
+            </Text>
           </View>
         </View>
-      )}
+
+        {/* ================= STEP 1 & 2: MAIN TWO-COLUMN CONTENT ================= */}
+        {step < 3 && (
+          <View style={[styles.mainLayout, isWide ? styles.mainLayoutRow : styles.mainLayoutCol]}>
+            {/* LEFT COLUMN: FORM CARD */}
+            <View style={[styles.leftColumn, isWide && { flex: 1.25 }]}>
+              {step === 1 ? (
+                /* STEP 1: DATE & TIME SELECTION */
+                <View style={[styles.card, SHADOWS.card]}>
+                  <Text style={styles.cardHeading}>When are you riding?</Text>
+                  <Text style={styles.cardSubheading}>
+                    Select your pickup and return dates to see vehicle availability and exact pricing.
+                  </Text>
+
+                  {/* 2x2 Form Inputs Grid */}
+                  <View style={styles.formGrid}>
+                    {/* Row 1: Pickup Date & Time */}
+                    <View style={styles.formRow}>
+                      <View style={styles.formFieldCol}>
+                        <View style={styles.fieldLabelRow}>
+                          <Calendar size={13} color="#94A3B8" />
+                          <Text style={styles.fieldLabelText}>PICKUP DATE</Text>
+                        </View>
+                        <View style={styles.inputBoxWithIcon}>
+                          <TextInput
+                            style={styles.textInputInside}
+                            value={pickupDate}
+                            onChangeText={setPickupDate}
+                            placeholder="MM/DD/YYYY"
+                            placeholderTextColor="#475569"
+                          />
+                          <Calendar size={16} color="#64748B" />
+                        </View>
+                      </View>
+
+                      <View style={styles.formFieldCol}>
+                        <View style={styles.fieldLabelRow}>
+                          <Clock size={13} color="#94A3B8" />
+                          <Text style={styles.fieldLabelText}>PICKUP TIME</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.dropdownBox}
+                          onPress={() => setActivePicker('pickup')}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.dropdownValueText} numberOfLines={1}>
+                            {pickupTime}
+                          </Text>
+                          <ChevronDown size={16} color="#64748B" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {/* Row 2: Return Date & Time */}
+                    <View style={styles.formRow}>
+                      <View style={styles.formFieldCol}>
+                        <View style={styles.fieldLabelRow}>
+                          <Calendar size={13} color="#94A3B8" />
+                          <Text style={styles.fieldLabelText}>RETURN DATE</Text>
+                        </View>
+                        <View style={styles.inputBoxWithIcon}>
+                          <TextInput
+                            style={styles.textInputInside}
+                            value={returnDate}
+                            onChangeText={setReturnDate}
+                            placeholder="MM/DD/YYYY"
+                            placeholderTextColor="#475569"
+                          />
+                          <Calendar size={16} color="#64748B" />
+                        </View>
+                      </View>
+
+                      <View style={styles.formFieldCol}>
+                        <View style={styles.fieldLabelRow}>
+                          <Clock size={13} color="#94A3B8" />
+                          <Text style={styles.fieldLabelText}>RETURN TIME</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.dropdownBox}
+                          onPress={() => setActivePicker('return')}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.dropdownValueText} numberOfLines={1}>
+                            {returnTime}
+                          </Text>
+                          <ChevronDown size={16} color="#64748B" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Security Deposit Notice Banner */}
+                  <View style={styles.depositNoticeBox}>
+                    <Info size={19} color="#00A3FF" style={{ flexShrink: 0, marginTop: 1 }} />
+                    <Text style={styles.depositNoticeText}>
+                      A security deposit of{' '}
+                      <Text style={styles.depositBoldText}>
+                        ₹{securityDeposit.toLocaleString()}*
+                      </Text>{' '}
+                      will be collected at pickup. This is 100% fully refundable after your ride upon standard vehicle handover inspection.
+                    </Text>
+                  </View>
+
+                  {/* CTA Button */}
+                  <TouchableOpacity
+                    style={[styles.continueBtn, SHADOWS.glowCyan]}
+                    onPress={() => setStep(2)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.continueBtnText}>Continue to Summary</Text>
+                    <ArrowRight size={17} color="#050B14" strokeWidth={2.5} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                /* STEP 2: RIDER & PAYMENT DETAILS */
+                <View style={[styles.card, SHADOWS.card]}>
+                  <Text style={styles.cardHeading}>Rider & Payment Details</Text>
+                  <Text style={styles.cardSubheading}>
+                    Enter rider contact information and select payment channel to finalize your booking.
+                  </Text>
+
+                  {/* Rider Contact Inputs */}
+                  <View style={styles.step2InputGroup}>
+                    <Text style={styles.step2Label}>RIDER FULL NAME</Text>
+                    <TextInput
+                      style={styles.step2Input}
+                      value={riderName}
+                      onChangeText={setRiderName}
+                      placeholder="e.g. Rahul Verma"
+                      placeholderTextColor="#475569"
+                    />
+                  </View>
+
+                  <View style={styles.step2Row}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.step2Label}>PHONE NUMBER</Text>
+                      <TextInput
+                        style={styles.step2Input}
+                        value={riderPhone}
+                        onChangeText={setRiderPhone}
+                        placeholder="+91 98765 43210"
+                        placeholderTextColor="#475569"
+                        keyboardType="phone-pad"
+                      />
+                    </View>
+
+                    <View style={{ flex: 1.2 }}>
+                      <Text style={styles.step2Label}>EMAIL ADDRESS</Text>
+                      <TextInput
+                        style={styles.step2Input}
+                        value={riderEmail}
+                        onChangeText={setRiderEmail}
+                        placeholder="rider@example.com"
+                        placeholderTextColor="#475569"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Payment Methods */}
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={styles.step2Label}>PAYMENT METHOD</Text>
+                    <View style={styles.paymentMethodsRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.paymentMethodCard,
+                          paymentMethod === 'upi' && styles.paymentMethodCardActive,
+                        ]}
+                        onPress={() => setPaymentMethod('upi')}
+                        activeOpacity={0.8}
+                      >
+                        <Smartphone size={18} color={paymentMethod === 'upi' ? '#00A3FF' : '#94A3B8'} />
+                        <Text style={[styles.paymentMethodText, paymentMethod === 'upi' && styles.paymentMethodTextActive]}>
+                          UPI / QR
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.paymentMethodCard,
+                          paymentMethod === 'card' && styles.paymentMethodCardActive,
+                        ]}
+                        onPress={() => setPaymentMethod('card')}
+                        activeOpacity={0.8}
+                      >
+                        <CreditCard size={18} color={paymentMethod === 'card' ? '#00A3FF' : '#94A3B8'} />
+                        <Text style={[styles.paymentMethodText, paymentMethod === 'card' && styles.paymentMethodTextActive]}>
+                          Credit / Debit
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.paymentMethodCard,
+                          paymentMethod === 'pickup' && styles.paymentMethodCardActive,
+                        ]}
+                        onPress={() => setPaymentMethod('pickup')}
+                        activeOpacity={0.8}
+                      >
+                        <ShieldCheck size={18} color={paymentMethod === 'pickup' ? '#00A3FF' : '#94A3B8'} />
+                        <Text style={[styles.paymentMethodText, paymentMethod === 'pickup' && styles.paymentMethodTextActive]}>
+                          Pay at Pickup
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Step 2 Action Buttons */}
+                  <View style={styles.step2Actions}>
+                    <TouchableOpacity
+                      style={styles.backBtn}
+                      onPress={() => setStep(1)}
+                      activeOpacity={0.8}
+                    >
+                      <ArrowLeft size={16} color="#94A3B8" />
+                      <Text style={styles.backBtnText}>Back</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.confirmBtn, SHADOWS.glowCyan]}
+                      onPress={handleProceedPayment}
+                      disabled={isProcessing}
+                      activeOpacity={0.85}
+                    >
+                      {isProcessing ? (
+                        <ActivityIndicator size="small" color="#050B14" />
+                      ) : (
+                        <>
+                          <Text style={styles.confirmBtnText}>
+                            Confirm & Reserve (₹{totalPayable.toLocaleString()})
+                          </Text>
+                          <ArrowRight size={17} color="#050B14" strokeWidth={2.5} />
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* RIGHT COLUMN: VEHICLE SUMMARY CARD */}
+            <View style={[styles.rightColumn, isWide && { flex: 1, maxWidth: 440 }]}>
+              <View style={[styles.card, styles.vehicleCard, SHADOWS.card]}>
+                {/* Bike Image Container */}
+                <View style={styles.bikeImageWrap}>
+                  <Image
+                    source={selectedBike.imageSource}
+                    style={styles.bikeImage}
+                    resizeMode="cover"
+                  />
+                </View>
+
+                {/* Bike Name & Specs */}
+                <Text style={styles.bikeName}>{selectedBike.name}</Text>
+                <Text style={styles.bikeModel}>
+                  {selectedBike.model} • {selectedBike.specs?.engine || '349.34 CC'}
+                </Text>
+
+                {/* Price Breakdown Line Items */}
+                <View style={styles.priceBreakdownWrap}>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Rental Fee</Text>
+                    <Text style={styles.priceValue}>
+                      ₹{selectedBike.pricePerDay.toLocaleString()} / day
+                    </Text>
+                  </View>
+
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Security Deposit</Text>
+                    <Text style={[styles.priceValue, styles.priceValueCyan]}>
+                      ₹{securityDeposit.toLocaleString()}*
+                    </Text>
+                  </View>
+
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceLabel}>Estimated Days</Text>
+                    <Text style={styles.priceValue}>{rentalDays} Days</Text>
+                  </View>
+
+                  {step === 2 && (
+                    <View style={[styles.priceRow, styles.totalRow]}>
+                      <Text style={styles.totalLabel}>Total Payable</Text>
+                      <Text style={styles.totalValue}>₹{totalPayable.toLocaleString()}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Change Selection Link */}
+                <TouchableOpacity
+                  style={styles.changeSelectionWrap}
+                  onPress={() => navigation?.navigate('Motorbikes')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.changeSelectionText}>
+                    Need a different bike? Change Selection
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ================= STEP 3: CONFIRMATION SUCCESS ================= */}
+        {step === 3 && (
+          <View style={[styles.card, styles.successCard, SHADOWS.card]}>
+            <View style={styles.successIconCircle}>
+              <CheckCircle2 size={54} color="#10B981" />
+            </View>
+
+            <Text style={styles.successTitle}>Reservation Confirmed!</Text>
+            <Text style={styles.successSubtitle}>
+              Your booking reference is{' '}
+              <Text style={{ fontWeight: '800', color: COLORS.accentCyan }}>
+                #{bookingRefId}
+              </Text>
+            </Text>
+
+            {/* Summary Box */}
+            <View style={styles.successSummaryBox}>
+              <View style={styles.successSummaryRow}>
+                <Text style={styles.successSummaryLabel}>Motorcycle</Text>
+                <Text style={styles.successSummaryValue}>{selectedBike.name}</Text>
+              </View>
+              <View style={styles.successSummaryRow}>
+                <Text style={styles.successSummaryLabel}>Pickup</Text>
+                <Text style={styles.successSummaryValue}>{pickupDate} @ {pickupTime}</Text>
+              </View>
+              <View style={styles.successSummaryRow}>
+                <Text style={styles.successSummaryLabel}>Return</Text>
+                <Text style={styles.successSummaryValue}>{returnDate} @ {returnTime}</Text>
+              </View>
+              <View style={[styles.successSummaryRow, { borderBottomWidth: 0 }]}>
+                <Text style={styles.successSummaryLabel}>Total Amount</Text>
+                <Text style={[styles.successSummaryValue, { color: '#00A3FF', fontWeight: '800' }]}>
+                  ₹{totalPayable.toLocaleString()}
+                </Text>
+              </View>
+            </View>
+
+            {/* Actions */}
+            <View style={styles.successActions}>
+              <TouchableOpacity
+                style={styles.whatsAppConfirmBtn}
+                onPress={() => onOpenWhatsApp && onOpenWhatsApp(selectedBike)}
+                activeOpacity={0.85}
+              >
+                <MessageCircle size={18} color="#050B14" />
+                <Text style={styles.whatsAppConfirmText}>
+                  Confirm Directly on WhatsApp
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.voucherBtn}
+                onPress={handleDownloadQuote}
+                activeOpacity={0.85}
+              >
+                <Download size={16} color="#00A3FF" />
+                <Text style={styles.voucherBtnText}>View Quotation Voucher</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.homeBtn}
+                onPress={() => navigation.navigate('Home')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.homeBtnText}>Back to Home Fleet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* ================= TIME PICKER MODAL ================= */}
+      <Modal
+        visible={activePicker !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActivePicker(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setActivePicker(null)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {activePicker === 'pickup' ? 'Select Pickup Time' : 'Select Return Time'}
+              </Text>
+              <TouchableOpacity onPress={() => setActivePicker(null)}>
+                <X size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 280 }}>
+              {(activePicker === 'pickup' ? PICKUP_TIMES : RETURN_TIMES).map((timeOption) => {
+                const isSelected =
+                  activePicker === 'pickup'
+                    ? pickupTime === timeOption
+                    : returnTime === timeOption;
+                return (
+                  <TouchableOpacity
+                    key={timeOption}
+                    style={[
+                      styles.timeOptionItem,
+                      isSelected && styles.timeOptionItemActive,
+                    ]}
+                    onPress={() => {
+                      if (activePicker === 'pickup') {
+                        setPickupTime(timeOption);
+                      } else {
+                        setReturnTime(timeOption);
+                      }
+                      setActivePicker(null);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.timeOptionText,
+                        isSelected && styles.timeOptionTextActive,
+                      ]}
+                    >
+                      {timeOption}
+                    </Text>
+                    {isSelected && <Check size={16} color="#00A3FF" />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
@@ -500,353 +610,446 @@ export default function BookingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bgDark,
+    backgroundColor: '#070B14',
   },
   contentContainer: {
-    padding: 20,
-    paddingBottom: 50,
+    paddingBottom: 80,
   },
+  pageInner: {
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+  },
+
+  /* Stepper */
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    paddingVertical: 10,
+    marginBottom: 28,
+    gap: 16,
   },
-  stepIndicator: {
+  stepItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
-  stepBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgCardAlt,
-    borderWidth: 1,
-    borderColor: COLORS.borderCard,
+  stepCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepBadgeActive: {
-    backgroundColor: COLORS.accentCyan,
-    borderColor: COLORS.accentCyan,
+  stepCircleActive: {
+    backgroundColor: '#00A3FF',
   },
-  stepBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
+  stepCircleInactive: {
+    backgroundColor: '#1E293B',
+  },
+  stepCircleNumActive: {
     color: '#050B14',
+    fontSize: 13,
+    fontWeight: '800',
   },
-  stepLabel: {
-    fontSize: 10,
+  stepCircleNumInactive: {
+    color: '#64748B',
+    fontSize: 13,
     fontWeight: '700',
-    color: COLORS.textMuted,
   },
-  stepLabelActive: {
-    color: COLORS.accentCyan,
+  stepText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  stepLine: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORS.borderCard,
-    marginHorizontal: 8,
+  stepTextActive: {
+    color: '#FFFFFF',
   },
-  stepLineActive: {
-    backgroundColor: COLORS.accentCyan,
+  stepTextInactive: {
+    color: '#64748B',
   },
-  bikeMiniBanner: {
+  stepDividerLine: {
+    width: 48,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  stepDividerLineActive: {
+    backgroundColor: '#00A3FF',
+  },
+
+  /* Two Column Layout */
+  mainLayout: {
+    width: '100%',
+  },
+  mainLayoutRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: COLORS.bgCard,
+    alignItems: 'flex-start',
+    gap: 24,
+  },
+  mainLayoutCol: {
+    flexDirection: 'column',
+    gap: 20,
+  },
+  leftColumn: {
+    width: '100%',
+  },
+  rightColumn: {
+    width: '100%',
+  },
+
+  /* Base Card */
+  card: {
+    backgroundColor: '#0B1322',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.borderCard,
-    borderRadius: RADIUS.md,
-    padding: 12,
-    marginBottom: 20,
+    borderColor: '#1E293B',
+    padding: 28,
   },
-  bikeMiniImg: {
-    width: 70,
-    height: 50,
-    borderRadius: RADIUS.sm,
+  cardHeading: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    letterSpacing: -0.3,
   },
-  bikeMiniInfo: {
+  cardSubheading: {
+    fontSize: 14,
+    color: '#94A3B8',
+    lineHeight: 20,
+    marginBottom: 28,
+  },
+
+  /* 2x2 Form Grid */
+  formGrid: {
+    gap: 20,
+  },
+  formRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  formFieldCol: {
     flex: 1,
   },
-  bikeMiniName: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
+  fieldLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
   },
-  bikeMiniModel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  bikeMiniPrice: {
-    fontSize: 12,
-    color: COLORS.accentCyan,
+  fieldLabelText: {
+    fontSize: 11.5,
     fontWeight: '700',
-    marginTop: 2,
+    color: '#8C9BB2',
+    letterSpacing: 0.6,
   },
-  stepCard: {
-    backgroundColor: COLORS.bgCard,
+  inputBoxWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#070D18',
     borderWidth: 1,
-    borderColor: COLORS.borderCard,
-    borderRadius: RADIUS.lg,
-    padding: 18,
+    borderColor: '#1E293B',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 11,
   },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
+  textInputInside: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 14.5,
+    fontWeight: '500',
+    padding: 0,
+    marginRight: 8,
   },
-  cardSubtitle: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 20,
-    lineHeight: 18,
+  dropdownBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#070D18',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
   },
-  inputSection: {
+  dropdownValueText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '500',
+    flex: 1,
+    marginRight: 6,
+  },
+
+  /* Security Deposit Box */
+  depositNoticeBox: {
+    backgroundColor: 'rgba(0, 163, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 163, 255, 0.2)',
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginTop: 24,
+    marginBottom: 26,
+  },
+  depositNoticeText: {
+    color: '#8C9BB2',
+    fontSize: 13.5,
+    lineHeight: 19,
+    flex: 1,
+  },
+  depositBoldText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  /* Primary Button */
+  continueBtn: {
+    backgroundColor: '#00A3FF',
+    borderRadius: RADIUS.full,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  continueBtnText: {
+    color: '#050B14',
+    fontSize: 15.5,
+    fontWeight: '700',
+  },
+
+  /* Right Column: Vehicle Card */
+  vehicleCard: {
+    padding: 20,
+  },
+  bikeImageWrap: {
+    height: 220,
+    backgroundColor: '#070C16',
+    borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: 18,
   },
-  sectionHeading: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 10,
+  bikeImage: {
+    width: '100%',
+    height: '100%',
   },
-  rowInputs: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  inputWrap: {},
-  inputLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+  bikeName: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
-  textInput: {
-    backgroundColor: COLORS.bgCardAlt,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: COLORS.textPrimary,
+  bikeModel: {
     fontSize: 13,
+    color: '#94A3B8',
+    marginBottom: 22,
   },
-  locationPills: {
-    gap: 8,
+  priceBreakdownWrap: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+    paddingTop: 16,
+    gap: 12,
   },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLORS.bgCardAlt,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    borderRadius: RADIUS.md,
-    padding: 12,
-  },
-  locationPillActive: {
-    backgroundColor: COLORS.accentCyan,
-    borderColor: COLORS.accentCyan,
-  },
-  locationPillText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-  },
-  locationPillTextActive: {
-    color: '#050B14',
-    fontWeight: '700',
-  },
-  durationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0, 163, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 163, 255, 0.25)',
-    borderRadius: RADIUS.md,
-    padding: 12,
-    marginBottom: 20,
-  },
-  durationText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    flex: 1,
-  },
-  nextBtn: {
-    backgroundColor: COLORS.accentCyan,
-    borderRadius: RADIUS.full,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  nextBtnText: {
-    color: '#050B14',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  breakdownCard: {
-    backgroundColor: COLORS.bgCardAlt,
-    borderRadius: RADIUS.md,
-    padding: 14,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-  },
-  breakdownRow: {
+  priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    alignItems: 'center',
   },
-  breakdownTotal: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderCard,
-    marginTop: 6,
-    paddingTop: 10,
+  priceLabel: {
+    color: '#94A3B8',
+    fontSize: 14,
   },
-  breakdownLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  breakdownVal: {
-    fontSize: 12,
+  priceValue: {
+    color: '#FFFFFF',
+    fontSize: 15.5,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+  },
+  priceValueCyan: {
+    color: '#00A3FF',
+  },
+  totalRow: {
+    marginTop: 6,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#1E293B',
   },
   totalLabel: {
-    fontSize: 13,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  totalValue: {
+    color: '#00A3FF',
+    fontSize: 18,
     fontWeight: '800',
-    color: COLORS.textPrimary,
   },
-  totalVal: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: COLORS.accentRed,
+  changeSelectionWrap: {
+    marginTop: 22,
+    alignSelf: 'flex-end',
   },
-  paymentOptions: {
-    gap: 10,
-  },
-  paymentOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: COLORS.bgCardAlt,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    borderRadius: RADIUS.md,
-    padding: 12,
-  },
-  paymentOptionActive: {
-    borderColor: COLORS.accentCyan,
-    backgroundColor: 'rgba(0, 163, 255, 0.08)',
-  },
-  paymentOptionText: {
+  changeSelectionText: {
+    color: '#00A3FF',
     fontSize: 13,
-    color: COLORS.textPrimary,
     fontWeight: '600',
   },
-  step2Buttons: {
+
+  /* Step 2 Inputs */
+  step2InputGroup: {
+    marginBottom: 16,
+  },
+  step2Row: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  step2Label: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#8C9BB2',
+    letterSpacing: 0.6,
+    marginBottom: 6,
+  },
+  step2Input: {
+    backgroundColor: '#070D18',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  paymentMethodsRow: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 10,
+    marginTop: 6,
   },
-  backStepBtn: {
+  paymentMethodCard: {
     flex: 1,
-    backgroundColor: COLORS.bgCardAlt,
+    backgroundColor: '#070D18',
     borderWidth: 1,
-    borderColor: COLORS.borderCard,
-    borderRadius: RADIUS.full,
+    borderColor: '#1E293B',
+    borderRadius: 12,
     paddingVertical: 14,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
   },
-  backStepText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
+  paymentMethodCardActive: {
+    borderColor: '#00A3FF',
+    backgroundColor: 'rgba(0, 163, 255, 0.08)',
+  },
+  paymentMethodText: {
+    color: '#94A3B8',
+    fontSize: 12,
     fontWeight: '600',
   },
-  payBtn: {
-    flex: 2.2,
-    backgroundColor: COLORS.accentRed,
-    borderRadius: RADIUS.full,
+  paymentMethodTextActive: {
+    color: '#00A3FF',
+  },
+  step2Actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: 28,
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    backgroundColor: '#070D18',
+  },
+  backBtnText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: '#00A3FF',
+    borderRadius: RADIUS.full,
+    paddingVertical: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  payBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
+  confirmBtnText: {
+    color: '#050B14',
+    fontSize: 15,
     fontWeight: '700',
   },
-  successIconWrap: {
+
+  /* Step 3 Success Card */
+  successCard: {
+    maxWidth: 580,
+    width: '100%',
+    alignSelf: 'center',
     alignItems: 'center',
-    marginVertical: 16,
+    paddingVertical: 36,
+    paddingHorizontal: 28,
+  },
+  successIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   successTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-    marginBottom: 4,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 6,
   },
   successSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
+    fontSize: 14,
+    color: '#94A3B8',
     marginBottom: 24,
   },
-  nextStepsCard: {
-    backgroundColor: COLORS.bgCardAlt,
-    borderRadius: RADIUS.md,
+  successSummaryBox: {
+    width: '100%',
+    backgroundColor: '#070D18',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1E293B',
     padding: 16,
     marginBottom: 24,
-    gap: 12,
-  },
-  nextStepsTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
-  },
-  nextStepItem: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-  },
-  nextStepNumber: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: COLORS.accentCyan,
-    color: '#050B14',
-    textAlign: 'center',
-    lineHeight: 22,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  nextStepText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    flex: 1,
-    lineHeight: 18,
-  },
-  step3Actions: {
     gap: 10,
   },
+  successSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  successSummaryLabel: {
+    color: '#94A3B8',
+    fontSize: 13.5,
+  },
+  successSummaryValue: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '600',
+  },
+  successActions: {
+    width: '100%',
+    gap: 12,
+  },
   whatsAppConfirmBtn: {
-    backgroundColor: COLORS.whatsappGreen,
+    backgroundColor: '#25D366',
     borderRadius: RADIUS.full,
-    paddingVertical: 13,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -854,13 +1057,13 @@ const styles = StyleSheet.create({
   },
   whatsAppConfirmText: {
     color: '#050B14',
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '700',
   },
   voucherBtn: {
-    backgroundColor: COLORS.bgCardAlt,
+    backgroundColor: '#070D18',
     borderWidth: 1,
-    borderColor: COLORS.accentCyan,
+    borderColor: '#00A3FF',
     borderRadius: RADIUS.full,
     paddingVertical: 13,
     flexDirection: 'row',
@@ -869,8 +1072,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   voucherBtnText: {
-    color: COLORS.accentCyan,
-    fontSize: 13,
+    color: '#00A3FF',
+    fontSize: 13.5,
     fontWeight: '700',
   },
   homeBtn: {
@@ -878,7 +1081,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   homeBtnText: {
-    color: COLORS.textMuted,
+    color: '#64748B',
     fontSize: 13,
+  },
+
+  /* Time Picker Modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 11, 20, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#0B1322',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 18,
+    width: 360,
+    maxWidth: '100%',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E293B',
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  timeOptionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  timeOptionItemActive: {
+    backgroundColor: 'rgba(0, 163, 255, 0.1)',
+  },
+  timeOptionText: {
+    color: '#94A3B8',
+    fontSize: 14,
+  },
+  timeOptionTextActive: {
+    color: '#00A3FF',
+    fontWeight: '700',
   },
 });

@@ -148,7 +148,13 @@ export default function BikeDetailsScreen({
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={[styles.bookBtn, SHADOWS.glowRed]}
-              onPress={() => onOpenBookModal(bike)}
+              onPress={() => {
+                if (onStartBooking) {
+                  onStartBooking(bike);
+                } else if (onOpenBookModal) {
+                  onOpenBookModal(bike);
+                }
+              }}
               activeOpacity={0.8}
             >
               <Text style={styles.bookBtnText}>Book This Bike</Text>
@@ -292,7 +298,13 @@ export default function BikeDetailsScreen({
 
         <TouchableOpacity
           style={[styles.stickyBookBtn, SHADOWS.glowRed]}
-          onPress={() => onOpenBookModal(bike)}
+          onPress={() => {
+            if (onStartBooking) {
+              onStartBooking(bike);
+            } else if (onOpenBookModal) {
+              onOpenBookModal(bike);
+            }
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.stickyBookBtnText}>Book this bike</Text>

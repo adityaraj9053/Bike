@@ -42,6 +42,7 @@ function BottomTabNavigator({
             user={user}
             onOpenAuth={onOpenAuth}
             onOpenWhatsApp={() => onOpenWhatsApp()}
+            onStartBooking={() => onStartBooking && onStartBooking()}
           />
         ),
         tabBarStyle: {
@@ -89,6 +90,7 @@ function BottomTabNavigator({
           <MotorbikesScreen
             {...props}
             onSelectBike={onSelectBike}
+            onStartBooking={onStartBooking}
             onOpenBookModal={onOpenBookModal}
           />
         )}

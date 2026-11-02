@@ -233,6 +233,7 @@ export default function HomeScreen({
                   if (onSelectBike) onSelectBike(b);
                   navigation.navigate('BikeDetails', { bike: b });
                 }}
+                onStartBooking={onStartBooking}
                 onOpenBookModal={onOpenBookModal}
                 style={styles.carouselCard}
               />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Compass, MessageCircle, User, Menu, X } from 'lucide-react';
+import { Compass, User, Menu, X } from 'lucide-react';
 
-export default function Navbar({ activePage, setActivePage, onOpenWhatsApp, onOpenAuth, user }) {
+export default function Navbar({ activePage, setActivePage, onOpenWhatsApp, onOpenAuth, onStartBooking, user }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -47,12 +47,28 @@ export default function Navbar({ activePage, setActivePage, onOpenWhatsApp, onOp
         {/* Action Buttons */}
         <div className="nav-actions">
           <button 
-            className="btn-whatsapp"
-            onClick={() => onOpenWhatsApp()}
-            title="Chat directly on WhatsApp"
+            className="btn-primary"
+            style={{ 
+              padding: '8px 20px', 
+              fontSize: '0.9rem', 
+              fontWeight: 700, 
+              borderRadius: '9999px',
+              background: '#FF3B30',
+              color: '#FFFFFF',
+              boxShadow: '0 4px 14px rgba(255, 59, 48, 0.35)',
+              cursor: 'pointer',
+              border: 'none',
+            }}
+            onClick={() => {
+              if (onStartBooking) {
+                onStartBooking();
+              } else if (setActivePage) {
+                setActivePage('booking');
+              }
+            }}
+            title="Book a motorbike"
           >
-            <MessageCircle size={18} />
-            <span>Enquire on WhatsApp</span>
+            <span>Book</span>
           </button>
 
           {user ? (
