@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   ChevronRight, 
+  ArrowLeft,
   Star, 
   CheckCircle2, 
   ShieldCheck, 
@@ -21,7 +22,8 @@ export default function BikeDetailsPage({
   onStartBooking, 
   onOpenWhatsApp, 
   onSelectBike,
-  onShowToast
+  onShowToast,
+  onGoBack
 }) {
   const { t, language } = useLanguage();
   const [activeImage, setActiveImage] = useState(bike.image);
@@ -33,17 +35,40 @@ export default function BikeDetailsPage({
   return (
     <div className="details-page">
       <div className="container">
-        {/* Breadcrumb Navigation */}
-        <div className="breadcrumb">
-          <a href="#home" onClick={(e) => { e.preventDefault(); onNavigate('home'); }}>
-            {t('navHome')}
-          </a>
-          <ChevronRight size={14} />
-          <a href="#motorbikes" onClick={(e) => { e.preventDefault(); onNavigate('motorbikes'); }}>
-            {t('navMotorbikes')}
-          </a>
-          <ChevronRight size={14} />
-          <span style={{ color: '#00A3FF', fontWeight: 600 }}>{bike.name}</span>
+        {/* Navigation Bar with Back Button & Breadcrumbs */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          marginBottom: '20px'
+        }}>
+          {onGoBack && (
+            <button 
+              type="button" 
+              className="page-back-btn" 
+              style={{ marginBottom: 0 }}
+              onClick={onGoBack}
+              aria-label="Go back to previous page"
+            >
+              <ArrowLeft size={16} />
+              <span>{language === 'hi' ? 'पिछला पेज' : 'Back'}</span>
+            </button>
+          )}
+
+          {/* Breadcrumb Navigation */}
+          <div className="breadcrumb" style={{ marginBottom: 0 }}>
+            <a href="#home" onClick={(e) => { e.preventDefault(); onNavigate('home'); }}>
+              {t('navHome')}
+            </a>
+            <ChevronRight size={14} />
+            <a href="#motorbikes" onClick={(e) => { e.preventDefault(); onNavigate('motorbikes'); }}>
+              {t('navMotorbikes')}
+            </a>
+            <ChevronRight size={14} />
+            <span style={{ color: '#00A3FF', fontWeight: 600 }}>{bike.name}</span>
+          </div>
         </div>
 
         {/* Hero Section: Gallery & Booking Info */}

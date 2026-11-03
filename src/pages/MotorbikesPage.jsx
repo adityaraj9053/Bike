@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Search, SlidersHorizontal, Zap, Cog, Fuel, MessageCircle, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, Zap, Cog, Fuel, MessageCircle, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { BIKES_DATA, CATEGORIES_DATA } from '../data/bikes';
 import BookDropdown from '../components/BookDropdown';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function MotorbikesPage({ 
   onSelectBike, 
   onStartBooking, 
   onOpenWhatsApp,
   onShowToast,
+  onGoBack,
   initialCategory = 'all'
 }) {
+  const { t, language } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -38,24 +41,43 @@ export default function MotorbikesPage({
   const paginatedBikes = filteredBikes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const categories = [
-    { id: 'all', label: 'All Bikes' },
-    { id: 'scooters', label: 'Scooters' },
-    { id: 'commuter', label: 'Commuter Bikes' },
-    { id: 'cruiser', label: 'Cruiser Bikes' },
-    { id: 'sports', label: 'Sports Bikes' },
-    { id: 'premium', label: 'Premium Bikes' },
+    { id: 'all', label: language === 'hi' ? 'सभी बाइक्स' : 'All Bikes' },
+    { id: 'scooters', label: language === 'hi' ? 'स्कूटर' : 'Scooters' },
+    { id: 'commuter', label: language === 'hi' ? 'कम्यूटर' : 'Commuter Bikes' },
+    { id: 'cruiser', label: language === 'hi' ? 'क्रूजर' : 'Cruiser Bikes' },
+    { id: 'sports', label: language === 'hi' ? 'स्पोर्ट्स' : 'Sports Bikes' },
+    { id: 'premium', label: language === 'hi' ? 'प्रीमियम' : 'Premium Bikes' },
   ];
 
   return (
-    <div className="motorbikes-page" style={{ padding: '50px 0 90px' }}>
+    <div className="motorbikes-page" style={{ padding: '40px 0 90px' }}>
       <div className="container">
+        {/* Top Back Navigation Button */}
+        {onGoBack && (
+          <button 
+            type="button" 
+            className="page-back-btn" 
+            onClick={onGoBack}
+            aria-label="Go back to previous page"
+          >
+            <ArrowLeft size={16} />
+            <span>{language === 'hi' ? 'पिछला पेज' : 'Back'}</span>
+          </button>
+        )}
+
         {/* Page Title */}
         <div className="section-header" style={{ marginBottom: '36px' }}>
           <h1 className="section-title" style={{ fontSize: '2.8rem' }}>
-            Find the Perfect Bike <span className="text-gradient">For Your Journey</span>
+            {language === 'hi' ? (
+              <>सफर के लिए <span className="text-gradient">सही बाइक चुनें</span></>
+            ) : (
+              <>Find the Perfect Bike <span className="text-gradient">For Your Journey</span></>
+            )}
           </h1>
           <p className="section-subtitle">
-            Explore our meticulously maintained fleet. Transparent pricing, zero hidden charges, and instant verification.
+            {language === 'hi'
+              ? 'सर्वोत्तम मेंटेनेंस वाली बाइक्स। पारदर्शी मूल्य, शून्य छिपा शुल्क और तुरंत सत्यापन।'
+              : 'Explore our meticulously maintained fleet. Transparent pricing, zero hidden charges, and instant verification.'}
           </p>
         </div>
 
@@ -117,7 +139,7 @@ export default function MotorbikesPage({
               <input
                 type="text"
                 className="form-input"
-                placeholder="Search by bike name, brand, or model..."
+                placeholder={language === 'hi' ? "बाइक का नाम, ब्रांड या मॉडल खोजें..." : "Search by bike name, brand, or model..."}
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 style={{ width: '100%', paddingLeft: '42px', borderRadius: '9999px' }}
@@ -125,17 +147,19 @@ export default function MotorbikesPage({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '0.85rem', color: '#94A3B8', whiteSpace: 'nowrap' }}>Sort by:</span>
+              <span style={{ fontSize: '0.85rem', color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                {language === 'hi' ? 'क्रम:' : 'Sort by:'}
+              </span>
               <select
                 className="form-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 style={{ padding: '10px 16px', borderRadius: '9999px', fontSize: '0.9rem' }}
               >
-                <option value="newest">Newest Arrivals</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Top Customer Rated</option>
+                <option value="newest">{language === 'hi' ? 'नई बाइक्स' : 'Newest Arrivals'}</option>
+                <option value="price-asc">{language === 'hi' ? 'कीमत: कम से ज्यादा' : 'Price: Low to High'}</option>
+                <option value="price-desc">{language === 'hi' ? 'कीमत: ज्यादा से कम' : 'Price: High to Low'}</option>
+                <option value="rating">{language === 'hi' ? 'उच्चतम रेटिंग' : 'Top Customer Rated'}</option>
               </select>
             </div>
           </div>
@@ -144,12 +168,14 @@ export default function MotorbikesPage({
         {/* Fleet Grid */}
         {paginatedBikes.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: '#94A3B8' }}>
-            <p style={{ fontSize: '1.2rem', marginBottom: '16px' }}>No motorbikes found matching your criteria.</p>
+            <p style={{ fontSize: '1.2rem', marginBottom: '16px' }}>
+              {language === 'hi' ? 'कोई बाइक नहीं मिली।' : 'No motorbikes found matching your criteria.'}
+            </p>
             <button 
               className="btn-outline" 
               onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
             >
-              Reset Filters
+              {language === 'hi' ? 'फ़िल्टर रीसेट करें' : 'Reset Filters'}
             </button>
           </div>
         ) : (
@@ -172,7 +198,7 @@ export default function MotorbikesPage({
                   
                   <div className="bike-card-price-row">
                     <span className="bike-price">₹{bike.pricePerDay.toLocaleString()}</span>
-                    <span className="bike-price-unit">/ day</span>
+                    <span className="bike-price-unit">{t('perDay')}</span>
                   </div>
 
                   <div className="bike-specs-strip">
@@ -192,7 +218,7 @@ export default function MotorbikesPage({
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#10B981', marginBottom: '16px' }}>
                     <CheckCircle2 size={14} />
-                    <span>Availability: Contact to confirm</span>
+                    <span>{language === 'hi' ? 'उपलब्धता: पुष्टि के लिए संपर्क करें' : 'Availability: Contact to confirm'}</span>
                   </div>
 
                   <div className="bike-card-actions">
@@ -201,18 +227,18 @@ export default function MotorbikesPage({
                       onClick={() => onOpenWhatsApp(bike)}
                     >
                       <MessageCircle size={16} />
-                      <span>Enquire Now</span>
+                      <span>{t('enquireWhatsApp')}</span>
                     </button>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'start' }}>
                       <button 
                         className="btn-card-action btn-outline"
                         onClick={() => onSelectBike(bike)}
                       >
-                        <span>View Details</span>
+                        <span>{t('viewDetails')}</span>
                       </button>
                       <BookDropdown
                         bike={bike}
-                        buttonText="Book"
+                        buttonText={t('btnBook')}
                         size="compact"
                         isOpen={openDropdownBikeId === bike.id}
                         onToggle={(open) => setOpenDropdownBikeId(open ? bike.id : null)}
@@ -235,6 +261,7 @@ export default function MotorbikesPage({
               style={{ padding: '8px 14px', borderRadius: '8px' }}
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              aria-label="Previous page"
             >
               <ChevronLeft size={18} />
             </button>
@@ -267,6 +294,7 @@ export default function MotorbikesPage({
               style={{ padding: '8px 14px', borderRadius: '8px' }}
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              aria-label="Next page"
             >
               <ChevronRight size={18} />
             </button>

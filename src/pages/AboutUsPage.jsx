@@ -7,11 +7,12 @@ import {
   Users, 
   MapPin, 
   Award,
-  CheckCircle2
+  CheckCircle2,
+  ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function AboutUsPage({ onNavigate }) {
+export default function AboutUsPage({ onNavigate, onGoBack }) {
   const { t, language } = useLanguage();
 
   const values = [
@@ -48,6 +49,19 @@ export default function AboutUsPage({ onNavigate }) {
   return (
     <div className="about-page" style={{ padding: '40px 0 90px' }}>
       <div className="container">
+        {/* Top Back Navigation Button */}
+        {onGoBack && (
+          <button 
+            type="button" 
+            className="page-back-btn" 
+            onClick={onGoBack}
+            aria-label="Go back to previous page"
+          >
+            <ArrowLeft size={16} />
+            <span>{language === 'hi' ? 'पिछला पेज' : 'Back'}</span>
+          </button>
+        )}
+
         {/* Page Header */}
         <div className="section-header" style={{ marginBottom: '60px' }}>
           <span className="section-pretitle">{language === 'hi' ? 'हमारे बारे में' : 'ABOUT THE ROAD EAGLE'}</span>

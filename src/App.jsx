@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import EnquiryModal from './components/EnquiryModal';
 import AuthModal from './components/AuthModal';
@@ -42,6 +43,9 @@ function MainApp() {
   const [selectedBike, setSelectedBike] = useState(initialBike);
   const [catalogCategory, setCatalogCategory] = useState(initialHash.category || 'all');
 
+  // Internal navigation history stack for responsive back navigation
+  const [navHistory, setNavHistory] = useState([]);
+
   // Modals
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
   const [enquiryBike, setEnquiryBike] = useState(null);
@@ -83,7 +87,7 @@ function MainApp() {
     const currentHash = window.location.hash || '#home';
     const initData = parseHash();
     window.history.replaceState(
-      { page: initData.page, category: initData.category, bikeId: initData.bikeId },
+      { page: initData.page || 'home', category: initData.category || 'all', bikeId: initData.bikeId },
       '',
       currentHash
     );
@@ -125,8 +129,11 @@ function MainApp() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [isEnquiryOpen, isAuthOpen, isQuoteOpen, isAgeModalOpen]);
 
-  // Navigate with history push
+  // Navigate with history push and internal stack tracking
   const handleNavigate = (page, category = 'all', pushHistory = true) => {
+    if (page !== activePage) {
+      setNavHistory((prev) => [...prev, { page: activePage, bike: selectedBike, category: catalogCategory }]);
+    }
     setActivePage(page);
     if (category) {
       setCatalogCategory(category);
@@ -144,6 +151,7 @@ function MainApp() {
   };
 
   const handleSelectBike = (bike, pushHistory = true) => {
+    setNavHistory((prev) => [...prev, { page: activePage, bike: selectedBike, category: catalogCategory }]);
     setSelectedBike(bike);
     setActivePage('bike-details');
 
@@ -159,6 +167,7 @@ function MainApp() {
 
   const proceedToBookingPage = (bike) => {
     const target = bike || selectedBike || BIKES_DATA[0];
+    setNavHistory((prev) => [...prev, { page: activePage, bike: selectedBike, category: catalogCategory }]);
     setSelectedBike(target);
     setActivePage('booking');
 
@@ -168,6 +177,29 @@ function MainApp() {
       `#booking?bike=${target.id}`
     );
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Back button handler for on-screen back buttons
+  const handleGoBack = () => {
+    if (navHistory.length > 0) {
+      const prev = navHistory[navHistory.length - 1];
+      setNavHistory((stack) => stack.slice(0, -1));
+      setActivePage(prev.page);
+      if (prev.category) setCatalogCategory(prev.category);
+      if (prev.bike) setSelectedBike(prev.bike);
+
+      const hash = `#${prev.page}${prev.category && prev.category !== 'all' ? `?cat=${prev.category}` : ''}${prev.bike && prev.page === 'bike-details' ? `?bike=${prev.bike.id}` : ''}`;
+      window.history.replaceState(
+        { page: prev.page, category: prev.category, bikeId: prev.bike?.id },
+        '',
+        hash
+      );
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      handleNavigate('home', 'all', true);
+    }
   };
 
   // Strictly 18+ check on booking
@@ -242,7 +274,7 @@ function MainApp() {
       />
 
       {/* Main Page View */}
-      <main style={{ minHeight: '80vh', paddingBottom: '60px' }}>
+      <main style={{ minHeight: '80vh', paddingBottom: '90px' }}>
         {activePage === 'home' && (
           <HomePage
             onNavigate={(page, cat) => handleNavigate(page, cat, true)}
@@ -259,6 +291,7 @@ function MainApp() {
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
             onShowToast={showToast}
+            onGoBack={handleGoBack}
             initialCategory={catalogCategory}
           />
         )}
@@ -271,6 +304,7 @@ function MainApp() {
             onOpenWhatsApp={handleOpenWhatsApp}
             onSelectBike={(bike) => handleSelectBike(bike, true)}
             onShowToast={showToast}
+            onGoBack={handleGoBack}
           />
         )}
 
@@ -281,22 +315,30 @@ function MainApp() {
             onOpenQuote={handleOpenQuote}
             onShowToast={showToast}
             onOpenWhatsApp={handleOpenWhatsApp}
+            onGoBack={handleGoBack}
             user={user}
           />
         )}
 
         {activePage === 'how-it-works' && (
-          <HowItWorksPage onNavigate={(page) => handleNavigate(page, 'all', true)} />
+          <HowItWorksPage 
+            onNavigate={(page) => handleNavigate(page, 'all', true)}
+            onGoBack={handleGoBack}
+          />
         )}
 
         {activePage === 'about-us' && (
-          <AboutUsPage onNavigate={(page) => handleNavigate(page, 'all', true)} />
+          <AboutUsPage 
+            onNavigate={(page) => handleNavigate(page, 'all', true)}
+            onGoBack={handleGoBack}
+          />
         )}
 
         {activePage === 'contact' && (
           <ContactPage
             onShowToast={showToast}
             onOpenWhatsApp={handleOpenWhatsApp}
+            onGoBack={handleGoBack}
           />
         )}
       </main>
@@ -304,7 +346,7 @@ function MainApp() {
       {/* Global Footer */}
       <Footer setActivePage={(page) => handleNavigate(page, 'all', true)} />
 
-      {/* Floating WhatsApp Quick Action Button in Green */}
+      {/* Floating WhatsApp Quick Action Button in Green on Left Side */}
       <div 
         onClick={() => handleOpenWhatsApp()}
         className="floating-whatsapp-btn"
@@ -312,6 +354,15 @@ function MainApp() {
       >
         <MessageCircle size={28} />
       </div>
+
+      {/* Persistent Bottom Navigation Bar on Every Page */}
+      <BottomNav
+        activePage={activePage}
+        onNavigate={(page) => handleNavigate(page, 'all', true)}
+        onOpenWhatsApp={() => handleOpenWhatsApp()}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        user={user}
+      />
 
       {/* Interactive Modals */}
       <EnquiryModal

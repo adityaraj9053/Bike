@@ -22,6 +22,7 @@ export default function BookingPage({
   onOpenQuote, 
   onShowToast, 
   onOpenWhatsApp,
+  onGoBack,
   user
 }) {
   const { t, language } = useLanguage();
@@ -118,6 +119,25 @@ export default function BookingPage({
   return (
     <div className="booking-page">
       <div className="container">
+        {/* Top Back Navigation Button */}
+        {onGoBack && (
+          <button 
+            type="button" 
+            className="page-back-btn" 
+            onClick={() => {
+              if (step > 1) {
+                setStep(step - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                onGoBack();
+              }
+            }}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={16} />
+            <span>{step > 1 ? (language === 'hi' ? 'पिछला स्टेप' : 'Previous Step') : (language === 'hi' ? 'पिछला पेज' : 'Back')}</span>
+          </button>
+        )}
 
         {/* ================= 18+ MANDATORY REMINDER BANNER ================= */}
         <div style={{

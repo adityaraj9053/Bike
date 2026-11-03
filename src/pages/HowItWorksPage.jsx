@@ -9,12 +9,13 @@ import {
   CheckCircle2, 
   Clock, 
   HelpCircle,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { FAQS_DATA } from '../data/bikes';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function HowItWorksPage({ onNavigate }) {
+export default function HowItWorksPage({ onNavigate, onGoBack }) {
   const { t, language } = useLanguage();
 
   const steps = [
@@ -55,6 +56,19 @@ export default function HowItWorksPage({ onNavigate }) {
   return (
     <div className="how-it-works-page" style={{ padding: '40px 0 90px' }}>
       <div className="container">
+        {/* Top Back Navigation Button */}
+        {onGoBack && (
+          <button 
+            type="button" 
+            className="page-back-btn" 
+            onClick={onGoBack}
+            aria-label="Go back to previous page"
+          >
+            <ArrowLeft size={16} />
+            <span>{language === 'hi' ? 'पिछला पेज' : 'Back'}</span>
+          </button>
+        )}
+
         {/* Page Header */}
         <div className="section-header" style={{ marginBottom: '60px' }}>
           <span className="section-pretitle">{language === 'hi' ? 'रेंटल प्रक्रिया' : 'SEAMLESS RESERVATIONS'}</span>

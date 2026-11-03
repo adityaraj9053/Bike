@@ -8,12 +8,13 @@ import {
   Send, 
   CheckCircle2, 
   Compass,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
+export default function ContactPage({ onShowToast, onOpenWhatsApp, onGoBack }) {
   const { t, language } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -48,6 +49,19 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
   return (
     <div className="contact-page" style={{ padding: '40px 0 90px' }}>
       <div className="container">
+        {/* Top Back Navigation Button */}
+        {onGoBack && (
+          <button 
+            type="button" 
+            className="page-back-btn" 
+            onClick={onGoBack}
+            aria-label="Go back to previous page"
+          >
+            <ArrowLeft size={16} />
+            <span>{language === 'hi' ? 'पिछला पेज' : 'Back'}</span>
+          </button>
+        )}
+
         {/* Page Header */}
         <div className="section-header" style={{ marginBottom: '60px' }}>
           <span className="section-pretitle">{language === 'hi' ? 'हमसे संपर्क करें' : 'GET IN TOUCH'}</span>
