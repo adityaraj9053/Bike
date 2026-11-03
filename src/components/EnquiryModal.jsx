@@ -7,9 +7,9 @@ import { useLanguage } from '../context/LanguageContext';
 export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToast, user }) {
   const { t, language } = useLanguage();
   const [bikeId, setBikeId] = useState(selectedBike?.id || 'night-hawk-cruiser');
-  const [fullName, setFullName] = useState(user?.name || '');
+  const [fullName, setFullName] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [phone, setPhone] = useState(user?.phone ? user.phone.replace(/^\+\d+\s*/, '') : '');
+  const [phone, setPhone] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [message, setMessage] = useState('');
@@ -22,10 +22,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
   }, [selectedBike]);
 
   useEffect(() => {
-    if (user) {
-      if (user.name && !fullName) setFullName(user.name);
-      if (user.phone && !phone) setPhone(user.phone.replace('+91 ', ''));
-    }
+    // Keep inputs strictly clean with placeholders visible
   }, [user]);
 
   if (!isOpen) return null;

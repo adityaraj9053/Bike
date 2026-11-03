@@ -38,11 +38,11 @@ export default function BookingPage({
   });
   const [returnTime, setReturnTime] = useState('08:00 PM');
   
-  // Rider details - empty strings by default so inputs show placeholders!
-  const [riderName, setRiderName] = useState(user?.name || '');
+  // Rider details - strictly empty by default so inputs hold placeholders only!
+  const [riderName, setRiderName] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [riderPhone, setRiderPhone] = useState(user?.phone ? user.phone.replace(/^\+\d+\s*/, '').replace(/\D/g, '') : '');
-  const [riderEmail, setRiderEmail] = useState(user?.email || '');
+  const [riderPhone, setRiderPhone] = useState('');
+  const [riderEmail, setRiderEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
   const [formError, setFormError] = useState('');
@@ -102,11 +102,7 @@ export default function BookingPage({
   };
 
   useEffect(() => {
-    if (user) {
-      if (user.name) setRiderName(user.name);
-      if (user.phone) setRiderPhone(user.phone.replace('+91 ', '').replace(/\D/g, ''));
-      if (user.email) setRiderEmail(user.email);
-    }
+    // Keep inputs clean so placeholders are visible to the user
   }, [user]);
 
   const bike = selectedBike || BIKES_DATA[0];
