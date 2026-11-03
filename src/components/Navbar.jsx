@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Compass, MessageCircle, User, Menu, X, Globe, Bike } from 'lucide-react';
+import { Compass, User, Menu, X, Globe } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar({ 
   activePage, 
   setActivePage, 
-  onOpenWhatsApp, 
   onOpenAuth, 
-  onBookNow,
   user 
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,15 +25,6 @@ export default function Navbar({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBookNowClick = () => {
-    setMobileMenuOpen(false);
-    if (onBookNow) {
-      onBookNow();
-    } else {
-      setActivePage('motorbikes');
-    }
-  };
-
   return (
     <header className="navbar">
       <div className="container navbar-inner">
@@ -44,7 +33,7 @@ export default function Navbar({
           <div className="brand-logo-icon">
             <Compass size={20} />
           </div>
-          <span style={{ letterSpacing: '0.04em' }}>THE ROAD EAGLE</span>
+          <span>THE ROAD EAGLE</span>
         </div>
 
         {/* Desktop Nav Links */}
@@ -62,16 +51,16 @@ export default function Navbar({
           </ul>
         </nav>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: Clean & Compact */}
         <div className="nav-actions">
-          {/* Language Switcher Button */}
+          {/* Language Switcher */}
           <button
             type="button"
-            className="btn-outline lang-toggle-btn"
+            className="btn-outline"
             onClick={toggleLanguage}
             title={language === 'en' ? 'Switch to Hindi (हिंदी)' : 'Switch to English'}
             style={{
-              padding: '7px 12px',
+              padding: '7px 14px',
               fontSize: '0.82rem',
               display: 'inline-flex',
               alignItems: 'center',
@@ -84,54 +73,11 @@ export default function Navbar({
             <span style={{ fontWeight: 700 }}>{language === 'en' ? 'हिंदी' : 'EN'}</span>
           </button>
 
-          {/* Red Book Now Button in Top Navigation */}
-          <button
-            type="button"
-            className="nav-book-now-btn"
-            onClick={handleBookNowClick}
-            style={{
-              background: '#FF3B30',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              padding: '8px 18px',
-              borderRadius: '9999px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 4px 14px rgba(255, 59, 48, 0.4)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#FF5247';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#FF3B30';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            <Bike size={16} />
-            <span>{t('navBookNow')}</span>
-          </button>
-
-          {/* Enquire on WhatsApp Desktop Button */}
-          <button 
-            className="btn-whatsapp nav-desktop-whatsapp"
-            onClick={() => onOpenWhatsApp()}
-            title="Chat directly on WhatsApp"
-          >
-            <MessageCircle size={17} />
-            <span>{t('navEnquireWhatsApp')}</span>
-          </button>
-
           {/* User Auth Button */}
           {user ? (
             <button 
               className="btn-outline" 
-              style={{ padding: '7px 14px', fontSize: '0.84rem' }}
+              style={{ padding: '7px 16px', fontSize: '0.85rem' }}
               onClick={onOpenAuth}
             >
               <User size={15} color="#00A3FF" />
@@ -140,7 +86,7 @@ export default function Navbar({
           ) : (
             <button 
               className="btn-outline" 
-              style={{ padding: '7px 14px', fontSize: '0.84rem' }}
+              style={{ padding: '7px 16px', fontSize: '0.85rem' }}
               onClick={onOpenAuth}
             >
               <User size={15} />
@@ -160,7 +106,7 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Mobile Drawer Dropdown */}
+      {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="mobile-nav-drawer">
           {navItems.map((item) => (
@@ -175,59 +121,7 @@ export default function Navbar({
 
           <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '8px 0' }}></div>
 
-          {/* Red Book Now in Mobile Menu */}
-          <button
-            type="button"
-            onClick={handleBookNowClick}
-            style={{
-              background: '#FF3B30',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              padding: '12px 20px',
-              borderRadius: '9999px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              width: '100%',
-              boxShadow: '0 4px 14px rgba(255, 59, 48, 0.4)'
-            }}
-          >
-            <Bike size={18} />
-            <span>{t('navBookNow')}</span>
-          </button>
-
-          {/* Enquire on WhatsApp in Mobile Menu */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              onOpenWhatsApp();
-            }}
-            style={{
-              background: '#25D366',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.92rem',
-              padding: '12px 20px',
-              borderRadius: '9999px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              width: '100%'
-            }}
-          >
-            <MessageCircle size={18} />
-            <span>{t('navEnquireWhatsApp')}</span>
-          </button>
-
-          {/* Language Toggle in Mobile Menu */}
+          {/* Language Toggle in Mobile Drawer */}
           <button
             type="button"
             onClick={toggleLanguage}
@@ -238,7 +132,7 @@ export default function Navbar({
               fontWeight: 600,
               fontSize: '0.9rem',
               padding: '10px 16px',
-              borderRadius: '10px',
+              borderRadius: '9999px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

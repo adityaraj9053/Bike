@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageCircle, Send, CheckCircle2, PhoneCall, Smartphone, AlertCircle } from 'lucide-react';
+import { X, MessageCircle, Send, CheckCircle2, PhoneCall, AlertCircle } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -35,7 +35,11 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
 
   const handleCallRedirect = () => {
     if (onShowToast) {
-      onShowToast(language === 'hi' ? 'द रोड ईगल कंसीयज को कॉल मिलाई जा रही है (+91 98765 43210)...' : 'Connecting direct call to The Road Eagle (+91 98765 43210)...');
+      onShowToast(
+        language === 'hi' 
+          ? 'द रोड ईगल कंसीयज को कॉल मिलाई जा रही है (+91 98765 43210)...' 
+          : 'Connecting direct call to The Road Eagle (+91 98765 43210)...'
+      );
     }
     window.location.href = 'tel:+919876543210';
   };
@@ -51,7 +55,11 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
     );
     window.open(`https://api.whatsapp.com/send?phone=919876543210&text=${text}`, '_blank');
     if (onShowToast) {
-      onShowToast(language === 'hi' ? `${currentBike.name} पूछताछ के लिए व्हाट्सएप खोला जा रहा है!` : `Redirecting to WhatsApp for ${currentBike.name} enquiry!`);
+      onShowToast(
+        language === 'hi' 
+          ? `${currentBike.name} पूछताछ के लिए व्हाट्सएप खोला जा रहा है!` 
+          : `Redirecting to WhatsApp for ${currentBike.name} enquiry!`
+      );
     }
     onClose();
   };
@@ -60,15 +68,21 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
     e.preventDefault();
     if (isEmailOnlyUser && (!phone || phone.length !== 10)) {
       if (onShowToast) {
-        onShowToast(language === 'hi' ? 'कृपया कॉलबैक के लिए 10 अंकों का फोन नंबर प्रदान करें।' : 'Please enter a valid 10-digit mobile number for callback.');
+        onShowToast(
+          language === 'hi' 
+            ? 'कृपया कॉलबैक के लिए 10 अंकों का फोन नंबर प्रदान करें।' 
+            : 'Please enter a valid 10-digit mobile number for callback.'
+        );
       }
       return;
     }
     setSubmitted(true);
     if (onShowToast) {
-      onShowToast(language === 'hi' 
-        ? `${currentBike.name} के लिए पूछताछ प्राप्त हुई! हमारी टीम शीघ्र ही आपसे संपर्क करेगी।` 
-        : `Enquiry received for ${currentBike.name}! Our team will connect with you shortly.`);
+      onShowToast(
+        language === 'hi' 
+          ? `${currentBike.name} के लिए पूछताछ प्राप्त हुई! हमारी टीम शीघ्र ही आपसे संपर्क करेगी।` 
+          : `Enquiry received for ${currentBike.name}! Our team will connect with you shortly.`
+      );
     }
     setTimeout(() => {
       setSubmitted(false);
@@ -77,17 +91,23 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 9999 }}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 10000, overflowX: 'hidden' }}>
       <div 
         className="modal-card" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '500px', width: '92%' }}
+        style={{ 
+          maxWidth: '480px', 
+          width: '92%',
+          overflowX: 'hidden',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
       >
-        <button className="modal-close-btn" onClick={onClose}>
+        <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
           <X size={18} />
         </button>
 
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '18px' }}>
           <div style={{
             width: '52px',
             height: '52px',
@@ -99,36 +119,37 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
             justifyContent: 'center',
             margin: '0 auto 12px'
           }}>
-            <MessageCircle size={28} />
+            <MessageCircle size={26} />
           </div>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>{t('enquiryTitle')}</h3>
+          <h3 style={{ fontSize: '1.45rem', marginBottom: '4px' }}>{t('enquiryTitle')}</h3>
           <p style={{ color: '#94A3B8', fontSize: '0.86rem' }}>
             {t('enquirySubtitle')}
           </p>
         </div>
 
         {/* Call and WhatsApp Quick Contact Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
           <button
             type="button"
             onClick={handleCallRedirect}
             style={{
               background: '#0284C7',
               color: '#ffffff',
-              padding: '12px 14px',
-              borderRadius: '10px',
+              padding: '11px 14px',
+              borderRadius: '9999px',
               fontWeight: 700,
-              fontSize: '0.88rem',
+              fontSize: '0.86rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px',
+              gap: '6px',
               boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
               border: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
-            <PhoneCall size={18} />
+            <PhoneCall size={16} />
             <span>{language === 'hi' ? 'सीधे कॉल करें' : 'Call Concierge'}</span>
           </button>
 
@@ -138,27 +159,28 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
             style={{
               background: '#25D366',
               color: '#ffffff',
-              padding: '12px 14px',
-              borderRadius: '10px',
+              padding: '11px 14px',
+              borderRadius: '9999px',
               fontWeight: 700,
-              fontSize: '0.88rem',
+              fontSize: '0.86rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px',
+              gap: '6px',
               boxShadow: '0 4px 14px rgba(37, 211, 102, 0.35)',
               border: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
-            <MessageCircle size={18} />
+            <MessageCircle size={16} />
             <span>{language === 'hi' ? 'व्हाट्सएप चैट' : 'Chat WhatsApp'}</span>
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '14px 0 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '14px 0 16px' }}>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-          <span style={{ color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+          <span style={{ color: '#64748B', fontSize: '0.74rem', textTransform: 'uppercase' }}>
             {language === 'hi' ? 'या पूछताछ फॉर्म भरें' : 'or submit enquiry form'}
           </span>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
@@ -166,24 +188,25 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
 
         {submitted ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 16px' }} />
-            <h4 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>
+            <CheckCircle2 size={44} color="#10B981" style={{ margin: '0 auto 14px' }} />
+            <h4 style={{ fontSize: '1.2rem', marginBottom: '6px' }}>
               {language === 'hi' ? 'पूछताछ दर्ज कर ली गई है!' : 'Enquiry Received!'}
             </h4>
-            <p style={{ color: '#94A3B8', fontSize: '0.88rem' }}>
+            <p style={{ color: '#94A3B8', fontSize: '0.86rem' }}>
               {language === 'hi' 
                 ? `${currentBike.name} के लिए आपकी पूछताछ हमारे रेंटल कंसीयज को भेज दी गई है।`
                 : `We received your request for ${currentBike.name}. Our concierge will connect with you shortly.`}
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div className="form-group">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">{language === 'hi' ? 'पसंदीदा बाइक' : 'Preferred Bike'}</label>
               <select
                 className="form-select"
                 value={bikeId}
                 onChange={(e) => setBikeId(e.target.value)}
+                style={{ width: '100%', boxBoxSizing: 'border-box' }}
               >
                 {BIKES_DATA.map((bike) => (
                   <option key={bike.id} value={bike.id}>
@@ -193,26 +216,26 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
               </select>
             </div>
 
-            {/* Email-only user reminder notice */}
+            {/* Email-only user notice */}
             {isEmailOnlyUser && (
               <div style={{
                 background: 'rgba(245, 158, 11, 0.12)',
                 border: '1px solid rgba(245, 158, 11, 0.3)',
                 borderRadius: '8px',
-                padding: '10px 12px',
-                fontSize: '0.82rem',
+                padding: '9px 12px',
+                fontSize: '0.8rem',
                 color: '#FBBF24',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <AlertCircle size={16} style={{ flexShrink: 0 }} />
                 <span>{t('emailLoggedInPhoneNotice')}</span>
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">{t('riderName')}</label>
                 <input
                   type="text"
@@ -220,12 +243,13 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
                   placeholder="e.g. John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                   required
                 />
               </div>
 
               {/* Phone number input with +91 default */}
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">
                   {t('riderPhone')} {isEmailOnlyUser ? ' *' : ''}
                 </label>
@@ -234,10 +258,11 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
                     background: 'rgba(255,255,255,0.06)',
                     border: '1px solid var(--border-card)',
                     borderRadius: '8px',
-                    padding: '12px 10px',
+                    padding: '11px 8px',
                     color: '#cbd5e1',
                     fontWeight: 700,
-                    fontSize: '0.85rem'
+                    fontSize: '0.82rem',
+                    flexShrink: 0
                   }}>
                     +91
                   </div>
@@ -248,51 +273,54 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
                     maxLength={10}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, minWidth: 0, boxSizing: 'border-box' }}
                     required={!!isEmailOnlyUser}
                   />
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">{t('pickupDate')}</label>
                 <input
                   type="date"
                   className="form-input"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">{t('returnDate')}</label>
                 <input
                   type="date"
                   className="form-input"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">{language === 'hi' ? 'विशेष अनुरोध या प्रश्न (वैकल्पिक)' : 'Special Requests / Notes (Optional)'}</label>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">{language === 'hi' ? 'विशेष अनुरोध (वैकल्पिक)' : 'Special Requests (Optional)'}</label>
               <textarea
                 rows="2"
                 className="form-textarea"
                 placeholder={language === 'hi' ? 'कोई विशेष प्रश्न या पूछताछ...' : 'Any questions about helmets, delivery or dates...'}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                style={{ width: '100%', boxSizing: 'border-box' }}
               ></textarea>
             </div>
 
             <button
               type="submit"
               className="btn-primary"
-              style={{ width: '100%', padding: '13px', justifyContent: 'center', marginTop: '4px' }}
+              style={{ width: '100%', padding: '12px', justifyContent: 'center', marginTop: '4px' }}
             >
-              <Send size={16} />
+              <Send size={15} />
               <span>{t('submitFormBtn')}</span>
             </button>
           </form>
