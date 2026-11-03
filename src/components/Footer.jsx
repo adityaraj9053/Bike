@@ -1,7 +1,10 @@
 import React from 'react';
-import { Compass, Heart } from 'lucide-react';
+import { Compass } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer({ setActivePage }) {
+  const { t, language } = useLanguage();
+
   const handleNav = (page) => {
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -20,7 +23,9 @@ export default function Footer({ setActivePage }) {
               <span>THE ROAD EAGLE</span>
             </div>
             <p>
-              Your Ride, Your Route, Your Freedom. Providing premium motorcycle and scooter rentals with transparency, precision maintenance, and absolute reliability.
+              {language === 'hi'
+                ? 'आपकी सवारी, आपका रास्ता, आपकी आज़ादी। विश्वसनीयता, पारदर्शिता और 24-पॉइंट सुरक्षा निरीक्षण के साथ प्रीमियम मोटरसाइकिल रेंटल सेवा।'
+                : 'Your Ride, Your Route, Your Freedom. Providing premium motorcycle and scooter rentals with transparency, precision maintenance, and absolute reliability.'}
             </p>
             <div className="footer-socials">
               <a href="#instagram" className="footer-social-btn" title="Instagram" onClick={(e) => e.preventDefault()}>
@@ -52,34 +57,34 @@ export default function Footer({ setActivePage }) {
 
           {/* Quick Links */}
           <div>
-            <h4 className="footer-col-title">Quick Links</h4>
+            <h4 className="footer-col-title">{language === 'hi' ? 'त्वरित लिंक' : 'Quick Links'}</h4>
             <ul className="footer-links">
-              <li><a href="#home" onClick={(e) => { e.preventDefault(); handleNav('home'); }}>Home</a></li>
-              <li><a href="#motorbikes" onClick={(e) => { e.preventDefault(); handleNav('motorbikes'); }}>Motorbikes Fleet</a></li>
-              <li><a href="#how-it-works" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>How It Works</a></li>
-              <li><a href="#about-us" onClick={(e) => { e.preventDefault(); handleNav('about-us'); }}>About Us</a></li>
-              <li><a href="#contact" onClick={(e) => { e.preventDefault(); handleNav('contact'); }}>Contact Us</a></li>
+              <li><a href="#home" onClick={(e) => { e.preventDefault(); handleNav('home'); }}>{t('navHome')}</a></li>
+              <li><a href="#motorbikes" onClick={(e) => { e.preventDefault(); handleNav('motorbikes'); }}>{t('navMotorbikes')}</a></li>
+              <li><a href="#how-it-works" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>{t('navHowItWorks')}</a></li>
+              <li><a href="#about-us" onClick={(e) => { e.preventDefault(); handleNav('about-us'); }}>{t('navAboutUs')}</a></li>
+              <li><a href="#contact" onClick={(e) => { e.preventDefault(); handleNav('contact'); }}>{t('navContactUs')}</a></li>
             </ul>
           </div>
 
           {/* Legal & Support */}
           <div>
-            <h4 className="footer-col-title">Legal & Support</h4>
+            <h4 className="footer-col-title">{language === 'hi' ? 'नियम एवं सहायता' : 'Legal & Support'}</h4>
             <ul className="footer-links">
-              <li><a href="#faqs" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>FAQs</a></li>
-              <li><a href="#privacy" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>Privacy Policy</a></li>
-              <li><a href="#terms" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>Terms & Conditions</a></li>
-              <li><a href="#rental-policies" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>Rental Policies</a></li>
-              <li><a href="#hub-location" onClick={(e) => { e.preventDefault(); handleNav('contact'); }}>Hub Locations</a></li>
+              <li><a href="#faqs" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>{language === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न' : 'FAQs'}</a></li>
+              <li><a href="#privacy" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>{language === 'hi' ? 'गोपनीयता नीति' : 'Privacy Policy'}</a></li>
+              <li><a href="#terms" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>{language === 'hi' ? 'नियम और शर्तें' : 'Terms & Conditions'}</a></li>
+              <li><a href="#rental-policies" onClick={(e) => { e.preventDefault(); handleNav('how-it-works'); }}>{language === 'hi' ? 'रेंटल नीतियां (18+)' : 'Rental Policies (18+)'}</a></li>
+              <li><a href="#hub-location" onClick={(e) => { e.preventDefault(); handleNav('contact'); }}>{language === 'hi' ? 'हब स्थान' : 'Hub Locations'}</a></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="footer-bottom">
-          <div>© 2024 The Road Eagle. All Rights Reserved.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Made with <Heart size={14} color="#EF4444" fill="#EF4444" /> for riders.
+          <div>© {new Date().getFullYear()} The Road Eagle. {language === 'hi' ? 'सर्वाधिकार सुरक्षित।' : 'All Rights Reserved.'}</div>
+          <div style={{ color: '#64748B', fontSize: '0.82rem' }}>
+            {language === 'hi' ? '🔞 18+ वैध ड्राइविंग लाइसेंस अनिवार्य' : '🔞 Strictly 18+ with Valid Driving License'}
           </div>
         </div>
       </div>

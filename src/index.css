@@ -1454,3 +1454,98 @@ button {
   .specs-table-grid { grid-template-columns: 1fr 1fr; }
   .nav-links { display: none; }
 }
+
+
+/* ================= FLOATING WHATSAPP BUTTON (LEFT SIDE - GREEN) ================= */
+.floating-whatsapp-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 999;
+  background: #25D366;
+  color: #ffffff;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.45);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floating-whatsapp-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 30px rgba(37, 211, 102, 0.65);
+}
+
+/* ================= MOBILE NAVIGATION & RESPONSIVE ================= */
+.mobile-hamburger-btn {
+  display: none;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 7px;
+  cursor: pointer;
+}
+
+.mobile-nav-drawer {
+  background: #0e1420;
+  border-bottom: 1px solid #1e293b;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeIn 0.2s ease;
+}
+
+.mobile-nav-item {
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+
+.mobile-nav-item.active {
+  color: #00A3FF;
+  font-weight: 700;
+}
+
+.modal-card {
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  .nav-links { display: none !important; }
+  .nav-desktop-whatsapp { display: none !important; }
+  .mobile-hamburger-btn { display: flex !important; align-items: center; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  .hero-title { font-size: 2.1rem !important; }
+  .hero-subtitle { font-size: 0.95rem !important; }
+  .category-cards-grid { grid-template-columns: 1fr !important; }
+  .bikes-grid { grid-template-columns: 1fr !important; }
+  .why-us-grid { grid-template-columns: 1fr !important; }
+  .steps-grid { grid-template-columns: 1fr !important; }
+  .feature-strip-grid { grid-template-columns: 1fr !important; }
+  .testimonials-grid { grid-template-columns: 1fr !important; }
+  .specs-table-grid { grid-template-columns: 1fr 1fr !important; }
+  .booking-form-grid { grid-template-columns: 1fr !important; }
+  .modal-card { padding: 24px 16px !important; width: 94% !important; }
+  .floating-whatsapp-btn {
+    bottom: 18px !important;
+    left: 16px !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+  .nav-book-now-btn span {
+    font-size: 0.8rem !important;
+  }
+}

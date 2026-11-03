@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EnquiryModal from './components/EnquiryModal';
 import AuthModal from './components/AuthModal';
 import QuoteModal from './components/QuoteModal';
+import AgeVerificationModal from './components/AgeVerificationModal';
 
 import HomePage from './pages/HomePage';
 import MotorbikesPage from './pages/MotorbikesPage';
@@ -15,8 +16,10 @@ import ContactPage from './pages/ContactPage';
 
 import { BIKES_DATA } from './data/bikes';
 import { MessageCircle, CheckCircle2 } from 'lucide-react';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
-export default function App() {
+function MainApp() {
+  const { t, language } = useLanguage();
   const [activePage, setActivePage] = useState('home');
   const [selectedBike, setSelectedBike] = useState(BIKES_DATA[0]);
   const [catalogCategory, setCatalogCategory] = useState('all');
@@ -28,8 +31,22 @@ export default function App() {
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [quoteData, setQuoteData] = useState(null);
 
-  // User state
-  const [user, setUser] = useState(null);
+  // 18+ Verification Modal
+  const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
+  const [pendingBookingBike, setPendingBookingBike] = useState(null);
+  const [isAgeVerified, setIsAgeVerified] = useState(() => {
+    return sessionStorage.getItem('road_eagle_age_verified') === 'true';
+  });
+
+  // User state persisted in localStorage
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('road_eagle_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Toasts
   const [toasts, setToasts] = useState([]);
@@ -56,10 +73,51 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Strictly 18+ check on booking:
+  // When user clicks book, verify 18+ popup first, then strictly show booking form!
   const handleStartBooking = (bike) => {
-    setSelectedBike(bike);
+    const targetBike = bike || selectedBike || BIKES_DATA[0];
+    setPendingBookingBike(targetBike);
+
+    if (!isAgeVerified) {
+      setIsAgeModalOpen(true);
+    } else {
+      setSelectedBike(targetBike);
+      setActivePage('booking');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleConfirmAge = () => {
+    setIsAgeVerified(true);
+    sessionStorage.setItem('road_eagle_age_verified', 'true');
+    const target = pendingBookingBike || selectedBike || BIKES_DATA[0];
+    setSelectedBike(target);
     setActivePage('booking');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(
+      language === 'hi' 
+        ? '18+ आयु सत्यापित! कृपया आरक्षण फॉर्म भरें।' 
+        : '18+ Age compliance confirmed! Please complete your booking form.'
+    );
+  };
+
+  const handleCancelAge = () => {
+    showToast(
+      language === 'hi' 
+        ? 'रेंटल केवल 18 वर्ष या उससे अधिक आयु के वैध लाइसेंस धारकों के लिए है।' 
+        : 'Rental is strictly restricted to individuals 18+ with a valid driving license.'
+    );
+  };
+
+  // Top Nav Book Now action:
+  // If on details page, starts booking directly; otherwise opens bikes fleet ("Bikes khuljae")
+  const handleTopBookNow = () => {
+    if (activePage === 'bike-details') {
+      handleStartBooking(selectedBike);
+    } else {
+      handleNavigate('motorbikes');
+    }
   };
 
   const handleOpenWhatsApp = (bike = null) => {
@@ -72,14 +130,34 @@ export default function App() {
     setIsQuoteOpen(true);
   };
 
+  const handleUserUpdate = (userData) => {
+    setUser(userData);
+    if (userData) {
+      localStorage.setItem('road_eagle_user', JSON.stringify(userData));
+      showToast(
+        language === 'hi' 
+          ? `स्वागत है, ${userData.name}!` 
+          : `Welcome back, ${userData.name}!`
+      );
+    } else {
+      localStorage.removeItem('road_eagle_user');
+      showToast(
+        language === 'hi' 
+          ? 'सफलतापूर्वक साइन आउट किया गया।' 
+          : 'Signed out successfully.'
+      );
+    }
+  };
+
   return (
     <div className="app-container">
-      {/* Top Navbar */}
+      {/* Top Navbar with Red Book Now & Language Selector */}
       <Navbar
         activePage={activePage}
         setActivePage={handleNavigate}
         onOpenWhatsApp={() => handleOpenWhatsApp()}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onBookNow={handleTopBookNow}
         user={user}
       />
 
@@ -123,6 +201,7 @@ export default function App() {
             onOpenQuote={handleOpenQuote}
             onShowToast={showToast}
             onOpenWhatsApp={handleOpenWhatsApp}
+            user={user}
           />
         )}
 
@@ -145,31 +224,13 @@ export default function App() {
       {/* Global Footer */}
       <Footer setActivePage={handleNavigate} />
 
-      {/* Floating WhatsApp Quick Action Button */}
+      {/* ================= WHATSAPP ENQUIRE OPTION IN GREEN IN LEFT SIDE ================= */}
       <div 
         onClick={() => handleOpenWhatsApp()}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          left: '24px',
-          zIndex: 999,
-          background: '#00A3FF',
-          color: '#060C18',
-          width: '54px',
-          height: '54px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 6px 24px rgba(0, 163, 255, 0.45)',
-          cursor: 'pointer',
-          transition: 'transform 0.2s ease, background 0.2s ease'
-        }}
-        title="Chat on WhatsApp"
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.background = '#25D366'; e.currentTarget.style.color = '#fff'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = '#00A3FF'; e.currentTarget.style.color = '#060C18'; }}
+        className="floating-whatsapp-btn"
+        title="Chat on WhatsApp (+91 98765 43210)"
       >
-        <MessageCircle size={26} />
+        <MessageCircle size={28} />
       </div>
 
       {/* Interactive Modals */}
@@ -178,19 +239,13 @@ export default function App() {
         onClose={() => setIsEnquiryOpen(false)}
         selectedBike={enquiryBike}
         onShowToast={showToast}
+        user={user}
       />
 
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLogin={(userData) => {
-          setUser(userData);
-          if (userData) {
-            showToast(`Welcome, ${userData.name}!`);
-          } else {
-            showToast('Signed out successfully.');
-          }
-        }}
+        onLogin={handleUserUpdate}
         user={user}
       />
 
@@ -199,6 +254,14 @@ export default function App() {
         onClose={() => setIsQuoteOpen(false)}
         bookingData={quoteData}
         bike={selectedBike}
+      />
+
+      {/* 18+ Mandatory Verification Modal */}
+      <AgeVerificationModal
+        isOpen={isAgeModalOpen}
+        onClose={() => setIsAgeModalOpen(false)}
+        onConfirm={handleConfirmAge}
+        onCancel={handleCancelAge}
       />
 
       {/* Toast Notifications */}
@@ -211,5 +274,13 @@ export default function App() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
   );
 }

@@ -1,31 +1,113 @@
 import React, { useState } from 'react';
-import { X, LogIn, Mail, Check } from 'lucide-react';
+import { X, Smartphone, Mail, ShieldCheck, ArrowRight, RefreshCw, KeyRound, CheckCircle2, User } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function AuthModal({ isOpen, onClose, onLogin, user }) {
+  const { t, language } = useLanguage();
+
+  // Mode: 'phone-login' | 'email-login' | 'signup' | 'forgot'
+  const [mode, setMode] = useState('phone-login');
+  
+  // Form fields
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
 
   if (!isOpen) return null;
 
-  const handleGoogleLogin = () => {
-    onLogin({
-      name: 'Rider Alex',
-      email: 'alex.rider@example.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
-    });
-    onClose();
+  const resetFormState = () => {
+    setOtp('');
+    setOtpSent(false);
+    setErrorMsg('');
+    setInfoMsg('');
   };
 
-  const handleEmailSubmit = (e) => {
+  const handleSwitchMode = (newMode) => {
+    setMode(newMode);
+    resetFormState();
+  };
+
+  // 1. Send OTP Handler
+  const handleSendOtp = (e) => {
     e.preventDefault();
-    if (!email) return;
-    onLogin({
-      name: name || email.split('@')[0],
-      email: email,
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
-    });
-    onClose();
+    setErrorMsg('');
+
+    if (mode === 'phone-login' || mode === 'signup') {
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      if (cleanPhone.length !== 10) {
+        setErrorMsg(language === 'hi' ? 'कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.');
+        return;
+      }
+    }
+
+    if (mode === 'email-login' || mode === 'signup') {
+      if (!email || !email.includes('@')) {
+        setErrorMsg(language === 'hi' ? 'कृपया एक वैध ईमेल पता दर्ज करें।' : 'Please enter a valid email address.');
+        return;
+      }
+    }
+
+    if (mode === 'signup' && !fullName.trim()) {
+      setErrorMsg(language === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.');
+      return;
+    }
+
+    setOtpSent(true);
+    setInfoMsg(language === 'hi' ? 'OTP भेजा गया! डेमो OTP: 1234' : 'OTP sent successfully! Demo OTP: 1234');
+  };
+
+  // 2. Verify OTP & Log In
+  const handleVerifyOtp = (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (!otp || otp.trim().length < 4) {
+      setErrorMsg(language === 'hi' ? 'कृपया 4-अंकों का OTP दर्ज करें।' : 'Please enter the 4-digit OTP.');
+      return;
+    }
+
+    let newUser = null;
+
+    if (mode === 'phone-login') {
+      newUser = {
+        name: `Rider ${phoneNumber.slice(-4)}`,
+        phone: `+91 ${phoneNumber}`,
+        email: '',
+        loginMethod: 'phone',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
+      };
+    } else if (mode === 'email-login') {
+      newUser = {
+        name: email.split('@')[0],
+        phone: '',
+        email: email,
+        loginMethod: 'email',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
+      };
+    } else if (mode === 'signup') {
+      newUser = {
+        name: fullName.trim(),
+        phone: `+91 ${phoneNumber}`,
+        email: email.trim(),
+        loginMethod: 'both',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
+      };
+    } else if (mode === 'forgot') {
+      setInfoMsg(language === 'hi' ? 'खाता पासवर्ड / OTP सफलतापूर्वक रीसेट कर दिया गया।' : 'Account access successfully restored!');
+      setTimeout(() => {
+        handleSwitchMode('phone-login');
+      }, 1500);
+      return;
+    }
+
+    if (newUser) {
+      onLogin(newUser);
+      onClose();
+    }
   };
 
   const handleSignOut = () => {
@@ -34,120 +116,322 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 9999 }}>
+      <div 
+        className="modal-card" 
+        onClick={(e) => e.stopPropagation()} 
+        style={{ maxWidth: '440px', width: '92%' }}
+      >
         <button className="modal-close-btn" onClick={onClose}>
           <X size={18} />
         </button>
 
         {user ? (
-          <div style={{ textAlign: 'center', padding: '10px 0' }}>
+          /* User Profile View when Logged In */
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
             <img
-              src={user.avatar}
+              src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'}
               alt={user.name}
-              style={{ width: '64px', height: '64px', borderRadius: '50%', marginBottom: '14px', border: '2px solid #00A3FF' }}
+              style={{ width: '68px', height: '68px', borderRadius: '50%', marginBottom: '14px', border: '2px solid #00A3FF' }}
             />
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '6px' }}>Welcome back, {user.name}!</h3>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '24px' }}>{user.email}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button
-                className="btn-outline"
-                style={{ width: '100%', borderColor: '#EF4444', color: '#EF4444' }}
-                onClick={handleSignOut}
-              >
-                Sign Out
-              </button>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '6px' }}>{user.name}</h3>
+            
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px', margin: '16px 0 24px', textAlign: 'left', fontSize: '0.88rem' }}>
+              {user.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <Mail size={16} color="#00A3FF" />
+                  <span>{user.email}</span>
+                </div>
+              )}
+              {user.phone && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1' }}>
+                  <Smartphone size={16} color="#10B981" />
+                  <span>{user.phone}</span>
+                </div>
+              )}
+              <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#64748B' }}>
+                {language === 'hi' ? 'सत्यापित राइडर खाता' : 'Verified Rider Profile'}
+              </div>
             </div>
+
+            <button
+              className="btn-outline"
+              style={{ width: '100%', borderColor: '#EF4444', color: '#EF4444' }}
+              onClick={handleSignOut}
+            >
+              {t('navSignOut')}
+            </button>
           </div>
         ) : (
+          /* Authentication Forms */
           <div>
-            <h3 style={{ fontSize: '1.65rem', fontWeight: 800, textAlign: 'center', marginBottom: '8px' }}>
-              {isSignUp ? 'Create Rider Account' : 'Sign In to The Road Eagle'}
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, textAlign: 'center', marginBottom: '6px' }}>
+              {mode === 'signup' 
+                ? t('signUpTitle') 
+                : mode === 'forgot' 
+                  ? t('forgotTitle') 
+                  : t('signInTitle')}
             </h3>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem', textAlign: 'center', marginBottom: '28px' }}>
-              Manage your motorcycle bookings, fast track document verification, and access exclusive member rates.
+            <p style={{ color: '#94A3B8', fontSize: '0.86rem', textAlign: 'center', marginBottom: '20px' }}>
+              {mode === 'forgot' ? t('forgotSubtitle') : t('authSubtitle')}
             </p>
 
-            {/* Google OAuth Button */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              style={{
-                width: '100%',
-                background: '#ffffff',
-                color: '#000000',
-                fontWeight: 600,
-                padding: '13px',
-                borderRadius: '9999px',
+            {/* Mode Selector Tabs (Login / Signup) */}
+            {mode !== 'forgot' && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: '10px',
+                padding: '4px',
+                marginBottom: '20px',
+                gap: '4px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('phone-login')}
+                  style={{
+                    background: mode === 'phone-login' ? '#00A3FF' : 'transparent',
+                    color: mode === 'phone-login' ? '#060C18' : '#cbd5e1',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    padding: '8px 4px',
+                    borderRadius: '8px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {language === 'hi' ? 'फोन OTP' : 'Phone OTP'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('email-login')}
+                  style={{
+                    background: mode === 'email-login' ? '#00A3FF' : 'transparent',
+                    color: mode === 'email-login' ? '#060C18' : '#cbd5e1',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    padding: '8px 4px',
+                    borderRadius: '8px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {language === 'hi' ? 'ईमेल OTP' : 'Email OTP'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('signup')}
+                  style={{
+                    background: mode === 'signup' ? '#00A3FF' : 'transparent',
+                    color: mode === 'signup' ? '#060C18' : '#cbd5e1',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    padding: '8px 4px',
+                    borderRadius: '8px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {language === 'hi' ? 'साइन अप' : 'Sign Up'}
+                </button>
+              </div>
+            )}
+
+            {/* Password Not Required Reminder */}
+            {(mode === 'phone-login' || mode === 'email-login') && (
+              <div style={{
+                background: 'rgba(0, 163, 255, 0.08)',
+                border: '1px solid rgba(0, 163, 255, 0.2)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                marginBottom: '16px',
+                fontSize: '0.82rem',
+                color: '#38BDF8',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                fontSize: '0.95rem',
-                marginBottom: '20px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                cursor: 'pointer'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>Continue with Google</span>
-            </button>
+                gap: '8px'
+              }}>
+                <ShieldCheck size={18} style={{ flexShrink: 0 }} />
+                <span>{t('phoneNoPasswordNote')}</span>
+              </div>
+            )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-              <span style={{ color: '#64748B', fontSize: '0.8rem', textTransform: 'uppercase' }}>or</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-            </div>
+            {/* Error & Info Alerts */}
+            {errorMsg && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid #EF4444', borderRadius: '8px', padding: '10px', fontSize: '0.85rem', marginBottom: '14px' }}>
+                {errorMsg}
+              </div>
+            )}
+            {infoMsg && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid #10B981', borderRadius: '8px', padding: '10px', fontSize: '0.85rem', marginBottom: '14px' }}>
+                {infoMsg}
+              </div>
+            )}
 
-            <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {isSignUp && (
+            {/* Form */}
+            <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Full Name field in Signup */}
+              {mode === 'signup' && (
                 <div className="form-group">
-                  <label className="form-label">Full Name</label>
+                  <label className="form-label">{t('riderName')}</label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder={language === 'hi' ? 'उदा. राहुल शर्मा' : 'e.g. Rahul Sharma'}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     required
                   />
                 </div>
               )}
 
-              <div className="form-group">
-                <label className="form-label">EMAIL ADDRESS</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+              {/* Mobile Input with +91 Country Code */}
+              {(mode === 'phone-login' || mode === 'signup' || (mode === 'forgot' && !email)) && (
+                <div className="form-group">
+                  <label className="form-label">{t('phoneNumberLabel')}</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid var(--border-card)',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      color: '#cbd5e1',
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <span>🇮🇳</span>
+                      <span>+91</span>
+                    </div>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      placeholder="9876543210"
+                      maxLength={10}
+                      value={phoneNumber}
+                      disabled={otpSent}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                      style={{ flex: 1 }}
+                      required={mode === 'phone-login' || mode === 'signup'}
+                    />
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
+                    {t('countryCodeNote')}
+                  </span>
+                </div>
+              )}
 
+              {/* Email Input */}
+              {(mode === 'email-login' || mode === 'signup' || (mode === 'forgot' && !phoneNumber)) && (
+                <div className="form-group">
+                  <label className="form-label">{t('riderEmail')}</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="name@example.com"
+                    value={email}
+                    disabled={otpSent}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required={mode === 'email-login' || mode === 'signup'}
+                  />
+                </div>
+              )}
+
+              {/* OTP Input Field */}
+              {otpSent && (
+                <div className="form-group" style={{ animation: 'fadeIn 0.2s ease' }}>
+                  <label className="form-label">{t('enterOtpLabel')}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="1234"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.3rem', fontWeight: 800 }}
+                    required
+                    autoFocus
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setOtp('1234')}
+                      style={{ background: 'none', border: 'none', color: '#00A3FF', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+                    >
+                      {language === 'hi' ? 'डेमो OTP भरें (1234)' : 'Fill Demo OTP (1234)'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => resetFormState()}
+                      style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+                    >
+                      {language === 'hi' ? 'नंबर बदलें' : 'Change Number'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Button */}
               <button
                 type="submit"
                 className="btn-primary"
-                style={{ width: '100%', padding: '13px', marginTop: '6px' }}
+                style={{ width: '100%', padding: '14px', marginTop: '6px', fontSize: '0.95rem' }}
               >
-                <span>{isSignUp ? 'Create Free Account' : 'Continue with email'}</span>
+                <span>
+                  {otpSent 
+                    ? t('verifyAndLoginBtn') 
+                    : mode === 'signup' 
+                      ? t('signUpBtn') 
+                      : mode === 'forgot' 
+                        ? t('sendResetOtp') 
+                        : t('sendOtpBtn')}
+                </span>
+                <ArrowRight size={18} />
               </button>
             </form>
 
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                style={{ background: 'none', border: 'none', color: '#00A3FF', fontSize: '0.88rem', cursor: 'pointer' }}
-              >
-                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-              </button>
+            {/* Bottom Links: Forgot Password & Alternate Mode */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', textAlign: 'center' }}>
+              {mode !== 'forgot' && (
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('forgot')}
+                  style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  {t('forgotPasswordText')}
+                </button>
+              )}
+
+              {mode === 'forgot' && (
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('phone-login')}
+                  style={{ background: 'none', border: 'none', color: '#00A3FF', fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  {t('backToLogin')}
+                </button>
+              )}
+
+              {mode === 'signup' ? (
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('phone-login')}
+                  style={{ background: 'none', border: 'none', color: '#00A3FF', fontSize: '0.86rem', cursor: 'pointer' }}
+                >
+                  {t('alreadyAccount')}
+                </button>
+              ) : (
+                mode !== 'forgot' && (
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchMode('signup')}
+                    style={{ background: 'none', border: 'none', color: '#00A3FF', fontSize: '0.86rem', cursor: 'pointer' }}
+                  >
+                    {t('noAccount')}
+                  </button>
+                )
+              )}
             </div>
           </div>
         )}
