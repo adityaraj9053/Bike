@@ -45,7 +45,13 @@ export default function HomePage({
       >
         <div className="hero-overlay"></div>
         <div className="hero-content">
-          <p className="hero-tag">{t('heroTag')}</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+            <span className="hero-tag-pill">
+              <span className="pulse-dot"></span>
+              {t('heroTag')}
+            </span>
+          </div>
+
           <h1 className="hero-title">
             {t('heroTitlePart1')}<br />
             <span className="text-gradient">{t('heroTitlePart2')}</span>
@@ -53,6 +59,7 @@ export default function HomePage({
           <p className="hero-subtitle">
             {t('heroSubtitle')}
           </p>
+
           <div className="hero-buttons">
             <button 
               className="btn-primary" 
@@ -77,19 +84,19 @@ export default function HomePage({
         <div className="container">
           <div className="feature-strip-grid">
             <div className="feature-strip-item">
-              <div className="feature-strip-icon"><Bike size={24} /></div>
+              <div className="feature-strip-icon"><Bike size={22} /></div>
               <span className="feature-strip-title">{t('featMultipleBikes')}</span>
             </div>
             <div className="feature-strip-item">
-              <div className="feature-strip-icon"><Tag size={24} /></div>
+              <div className="feature-strip-icon"><Tag size={22} /></div>
               <span className="feature-strip-title">{t('featPricing')}</span>
             </div>
             <div className="feature-strip-item">
-              <div className="feature-strip-icon"><Headphones size={24} /></div>
+              <div className="feature-strip-icon"><Headphones size={22} /></div>
               <span className="feature-strip-title">{t('featSupport')}</span>
             </div>
             <div className="feature-strip-item">
-              <div className="feature-strip-icon"><CalendarCheck size={24} /></div>
+              <div className="feature-strip-icon"><CalendarCheck size={22} /></div>
               <span className="feature-strip-title">{t('featEnquiries')}</span>
             </div>
           </div>
@@ -97,11 +104,11 @@ export default function HomePage({
       </section>
 
       {/* ================= PHILOSOPHY STATEMENT ================= */}
-      <section style={{ padding: '70px 0 30px', textAlign: 'center' }}>
+      <section style={{ padding: '75px 0 35px', textAlign: 'center' }}>
         <div className="container" style={{ maxWidth: '860px' }}>
-          <h2 style={{ fontSize: '2.4rem', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '2.4rem', marginBottom: '16px', letterSpacing: '-0.02em' }}>
             {language === 'hi' ? 'ज्यादा घूमें। ' : 'Ride More. '}
-            <span className="text-cyan">{language === 'hi' ? 'तनाव मुक्त रहें।' : 'Worry Less.'}</span>
+            <span className="text-gradient">{language === 'hi' ? 'तनाव मुक्त रहें।' : 'Worry Less.'}</span>
           </h2>
           <p style={{ color: '#94A3B8', fontSize: '1.05rem', lineHeight: '1.8' }}>
             {language === 'hi' 
@@ -130,9 +137,9 @@ export default function HomePage({
               >
                 <img src={cat.image} alt={cat.label} className="category-card-img" />
                 <div className="category-card-overlay">
-                  <div>
+                  <div style={{ textAlign: 'center', width: '100%' }}>
                     <h3 className="category-card-title">{cat.label}</h3>
-                    <p style={{ fontSize: '0.8rem', color: '#cbd5e1', marginTop: '4px' }}>
+                    <p style={{ fontSize: '0.82rem', color: '#cbd5e1', marginTop: '4px' }}>
                       {cat.description}
                     </p>
                   </div>
@@ -181,15 +188,15 @@ export default function HomePage({
 
                   <div className="bike-specs-strip">
                     <div className="bike-spec-item">
-                      <Zap size={14} />
+                      <Zap size={13} color="#00A3FF" />
                       <span>{bike.specs.displacement}</span>
                     </div>
                     <div className="bike-spec-item">
-                      <Cog size={14} />
+                      <Cog size={13} color="#00A3FF" />
                       <span>{bike.specs.transmission || 'Manual'}</span>
                     </div>
                     <div className="bike-spec-item">
-                      <Fuel size={14} />
+                      <Fuel size={13} color="#00A3FF" />
                       <span>{bike.specs.fuelType}</span>
                     </div>
                   </div>
@@ -198,6 +205,7 @@ export default function HomePage({
                     <BookDropdown
                       bike={bike}
                       buttonText={t('bookThisBike')}
+                      size="compact"
                       onShowToast={onShowToast}
                       onStartBooking={onStartBooking}
                     />
@@ -217,7 +225,16 @@ export default function HomePage({
             <button 
               className="btn-outline" 
               onClick={() => onNavigate('motorbikes')}
-              style={{ padding: '14px 36px', fontSize: '1rem' }}
+              style={{ 
+                padding: '12px 32px', 
+                fontSize: '0.95rem',
+                borderRadius: '9999px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                maxWidth: '300px'
+              }}
             >
               <span>{language === 'hi' ? `सभी मोटरसाइकिलें देखें (${BIKES_DATA.length})` : `View All Motorbikes (${BIKES_DATA.length})`}</span>
               <ChevronRight size={18} />
@@ -229,7 +246,13 @@ export default function HomePage({
       {/* ================= WHY CHOOSE US ================= */}
       <section className="why-us-section">
         <div className="container">
-          <h2 className="why-us-title">{language === 'hi' ? 'हमें क्यों चुनें?' : 'Why Choose Us?'}</h2>
+          <div className="section-header" style={{ marginBottom: '40px' }}>
+            <h2 className="why-us-title">{language === 'hi' ? 'हमें क्यों चुनें?' : 'Why Choose Us?'}</h2>
+            <p style={{ color: 'rgba(7, 14, 27, 0.85)', fontSize: '1.05rem', marginTop: '8px' }}>
+              {language === 'hi' ? 'विश्वसनीयता, सुरक्षा और बेहतरीन सर्विस का भरोसा।' : 'Trusted for reliability, top safety standards, and unmatched support.'}
+            </p>
+          </div>
+
           <div className="why-us-grid">
             <div className="why-us-card">
               <div className="why-us-icon-wrap">
@@ -285,6 +308,14 @@ export default function HomePage({
       {/* ================= 4-STEP PROCESS ================= */}
       <section className="steps-section">
         <div className="container">
+          <div className="section-header">
+            <span className="section-pretitle">{language === 'hi' ? 'सरल प्रक्रिया' : 'SIMPLE RENTAL STEPS'}</span>
+            <h2 className="section-title">{language === 'hi' ? '4 आसान चरणों में राइड शुरू करें' : 'Start Riding in 4 Easy Steps'}</h2>
+            <p className="section-subtitle">
+              {language === 'hi' ? 'बिना किसी परेशानी के त्वरित और पारदर्शी मोटरसाइकिल आरक्षण।' : 'Quick, paperless, and hassle-free vehicle reservations.'}
+            </p>
+          </div>
+
           <div className="steps-grid">
             <div className="step-card">
               <div className="step-number">01</div>
@@ -320,7 +351,7 @@ export default function HomePage({
             </p>
           </div>
 
-          <div className="faqs-list">
+          <div className="faqs-list" style={{ maxWidth: '780px', margin: '0 auto' }}>
             {FAQS_DATA.map((faq, index) => {
               const isOpen = openFaqIndex === index;
               return (

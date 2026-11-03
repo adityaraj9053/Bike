@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function BookDropdown({ 
@@ -22,7 +22,7 @@ export default function BookDropdown({
   };
 
   return (
-    <div style={{ display: 'inline-block', width: isCompact ? '100%' : 'auto' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', maxWidth: '100%' }}>
       <button
         type="button"
         onClick={handleBookClick}
@@ -31,16 +31,19 @@ export default function BookDropdown({
           color: '#ffffff',
           fontWeight: 700,
           borderRadius: '9999px',
-          padding: isCompact ? '10px 16px' : '14px 26px',
-          fontSize: isCompact ? '0.88rem' : '1rem',
-          display: 'flex',
+          padding: isCompact ? '8px 14px' : '10px 18px',
+          fontSize: isCompact ? '0.84rem' : '0.88rem',
+          display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px',
+          textAlign: 'center',
+          gap: '6px',
           width: '100%',
-          boxShadow: '0 4px 18px rgba(255, 59, 48, 0.4)',
+          maxWidth: '220px',
+          boxShadow: '0 3px 14px rgba(255, 59, 48, 0.35)',
           cursor: 'pointer',
           border: 'none',
+          whiteSpace: 'nowrap',
           transition: 'all 0.15s ease',
           ...buttonStyle
         }}
@@ -54,7 +57,7 @@ export default function BookDropdown({
         }}
       >
         <span>{label}</span>
-        <ArrowRight size={16} />
+        <ArrowRight size={15} />
       </button>
     </div>
   );

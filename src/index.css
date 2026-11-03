@@ -1549,3 +1549,282 @@ button {
     font-size: 0.8rem !important;
   }
 }
+
+
+/* ================= MODERN UI UPGRADE & BUTTON REFINEMENT ================= */
+.hero-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 163, 255, 0.12);
+  border: 1px solid rgba(0, 163, 255, 0.3);
+  color: #38BDF8;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00A3FF;
+  box-shadow: 0 0 8px #00A3FF;
+  animation: pulseGlow 1.8s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+.btn-primary, .btn-outline, .btn-whatsapp, .btn-whatsapp-dark {
+  border-radius: 9999px !important;
+  white-space: nowrap;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-primary:active, .btn-outline:active, .btn-whatsapp:active {
+  transform: scale(0.97) !important;
+}
+
+/* Constrained modern button widths (never sprawling across full screen) */
+.hero-buttons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  margin: 0 auto !important;
+  flex-wrap: wrap !important;
+}
+
+.hero-buttons button {
+  min-width: 170px !important;
+  max-width: 240px !important;
+  padding: 12px 24px !important;
+}
+
+.cta-banner-buttons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  margin: 0 auto !important;
+  flex-wrap: wrap !important;
+}
+
+.cta-banner-buttons button {
+  min-width: 170px !important;
+  max-width: 240px !important;
+  padding: 12px 24px !important;
+}
+
+/* Modern Bike Cards & Centered Aesthetics */
+.bike-card {
+  background: linear-gradient(180deg, rgba(20, 27, 40, 0.75) 0%, rgba(10, 15, 24, 0.95) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(14px);
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.bike-card:hover {
+  transform: translateY(-5px) !important;
+  border-color: rgba(0, 163, 255, 0.4) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 163, 255, 0.12) !important;
+}
+
+.bike-card-body {
+  text-align: center !important;
+  align-items: center !important;
+}
+
+.bike-card-title {
+  text-align: center !important;
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+}
+
+.bike-card-tagline {
+  text-align: center !important;
+  font-size: 0.85rem !important;
+}
+
+.bike-card-price-row {
+  justify-content: center !important;
+}
+
+.bike-specs-strip {
+  justify-content: center !important;
+  gap: 12px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 8px 12px !important;
+  width: 100%;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bike-spec-item {
+  gap: 4px !important;
+  font-size: 0.78rem !important;
+}
+
+.bike-card-actions {
+  display: grid !important;
+  grid-template-columns: 1.15fr 0.85fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 290px !important;
+  margin: auto auto 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.btn-card-action {
+  padding: 9px 12px !important;
+  border-radius: 9999px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* Modern CTA Banner */
+.cta-banner {
+  border-radius: 28px !important;
+  padding: 56px 32px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.cta-banner-content {
+  text-align: center !important;
+  margin: 0 auto !important;
+  max-width: 650px !important;
+}
+
+.cta-banner-title {
+  text-align: center !important;
+  font-size: 2.3rem !important;
+}
+
+.cta-banner-subtitle {
+  text-align: center !important;
+  margin: 0 auto 24px !important;
+}
+
+/* Why Choose Us & Steps */
+.why-us-card {
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 20px !important;
+  padding: 32px 24px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  transition: all 0.3s ease !important;
+}
+
+.why-us-card:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-4px) !important;
+}
+
+.why-us-icon-wrap {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 16px !important;
+}
+
+.why-us-card-title {
+  text-align: center !important;
+  font-size: 1.2rem !important;
+}
+
+.why-us-card-text {
+  text-align: center !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+}
+
+.step-card {
+  text-align: center !important;
+  background: rgba(18, 24, 36, 0.55) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 20px !important;
+  padding: 28px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.step-number {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, rgba(0, 163, 255, 0.25) 0%, rgba(0, 163, 255, 0.05) 100%) !important;
+  border: 1.5px solid #00A3FF !important;
+  color: #00A3FF !important;
+  font-weight: 800 !important;
+  margin: 0 auto 14px !important;
+}
+
+.step-title, .step-description {
+  text-align: center !important;
+}
+
+/* Floating WhatsApp Pulse */
+.floating-whatsapp-btn {
+  animation: whatsappPulse 3s infinite !important;
+}
+
+@keyframes whatsappPulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+@media (max-width: 640px) {
+  .hero-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .hero-buttons button {
+    width: 100% !important;
+    max-width: 260px !important;
+    margin: 0 auto !important;
+  }
+  .cta-banner-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .cta-banner-buttons button {
+    width: 100% !important;
+    max-width: 260px !important;
+    margin: 0 auto !important;
+  }
+}
