@@ -33,6 +33,8 @@ export const translations = {
 
     // Bike Cards
     bookThisBike: "Book this bike",
+    btnBook: "Book Now",
+    btnWhatsAppShort: "WhatsApp",
     viewDetails: "View Details",
     perDay: "/ day",
     from: "from",
@@ -128,6 +130,8 @@ export const translations = {
 
     // Bike Cards
     bookThisBike: "यह बाइक बुक करें",
+    btnBook: "बुक करें",
+    btnWhatsAppShort: "व्हाट्सएप",
     viewDetails: "विवरण देखें",
     perDay: "/ दिन",
     from: "शुरू",

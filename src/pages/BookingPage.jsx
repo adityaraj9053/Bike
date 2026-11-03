@@ -26,10 +26,15 @@ export default function BookingPage({
   user
 }) {
   const { t, language } = useLanguage();
+  const todayDateStr = new Date().toISOString().split('T')[0];
   const [step, setStep] = useState(1); // 1: DateSelection, 2: BookingSummary, 3: Confirmation
-  const [pickupDate, setPickupDate] = useState('2026-11-05');
+  const [pickupDate, setPickupDate] = useState(todayDateStr);
   const [pickupTime, setPickupTime] = useState('09:00 AM');
-  const [returnDate, setReturnDate] = useState('2026-11-07');
+  const [returnDate, setReturnDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().split('T')[0];
+  });
   const [returnTime, setReturnTime] = useState('08:00 PM');
   
   // Rider details with default +91 country code and 10-digit mobile
@@ -39,6 +44,56 @@ export default function BookingPage({
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // Field validation errors
+  const [nameError, setNameError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  // Validation functions
+  const validateEmail = (str) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(String(str || '').trim().toLowerCase());
+  };
+
+  const validatePhone = (str) => {
+    const clean = String(str || '').replace(/\D/g, '');
+    return /^[6-9]\d{9}$/.test(clean);
+  };
+
+  const handlePhoneChange = (val) => {
+    const clean = val.replace(/\D/g, '');
+    setRiderPhone(clean);
+    if (clean.length > 0 && !validatePhone(clean)) {
+      setPhoneError(
+        language === 'hi' 
+          ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6-9 से शुरू)।' 
+          : 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).'
+      );
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handleEmailChange = (val) => {
+    setRiderEmail(val);
+    if (val.length > 0 && !validateEmail(val)) {
+      setEmailError(
+        language === 'hi' 
+          ? 'कृपया एक मान्य ईमेल पता दर्ज करें (उदा. rider@example.com)।' 
+          : 'Please enter a valid email address (e.g. rider@example.com).'
+      );
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const handleNameChange = (val) => {
+    setRiderName(val);
+    if (val.trim().length > 0) {
+      setNameError('');
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -74,19 +129,68 @@ export default function BookingPage({
       setFormError(language === 'hi' ? 'कृपया पिकअप और वापसी की तिथि चुनें।' : 'Please select both pickup and return dates.');
       return;
     }
+    if (new Date(returnDate) < new Date(pickupDate)) {
+      setFormError(
+        language === 'hi' 
+          ? 'वापसी की तिथि पिकअप तिथि से पहले की नहीं हो सकती।' 
+          : 'Return date cannot be earlier than pickup date.'
+      );
+      return;
+    }
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleProceedPayment = () => {
     setFormError('');
-    const cleanPhone = riderPhone.replace(/\D/g, '');
-    if (cleanPhone.length !== 10) {
-      setFormError(language === 'hi' ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.');
-      return;
+    let hasError = false;
+
+    // 1. Name check
+    if (!riderName || !riderName.trim()) {
+      setNameError(language === 'hi' ? 'कृपया राइडर का पूरा नाम दर्ज करें।' : 'Please enter the rider full name.');
+      hasError = true;
+    } else {
+      setNameError('');
     }
-    if (!riderName.trim()) {
-      setFormError(language === 'hi' ? 'कृपया राइडर का पूरा नाम दर्ज करें।' : 'Please enter the rider name.');
+
+    // 2. Strict Phone check (10 digits starting with 6-9)
+    const cleanPhone = riderPhone.replace(/\D/g, '');
+    if (!validatePhone(cleanPhone)) {
+      setPhoneError(
+        language === 'hi' 
+          ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू)।' 
+          : 'Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).'
+      );
+      hasError = true;
+    } else {
+      setPhoneError('');
+    }
+
+    // 3. Strict Email regex check
+    if (!riderEmail || !validateEmail(riderEmail)) {
+      setEmailError(
+        language === 'hi' 
+          ? 'कृपया एक मान्य ईमेल पता दर्ज करें (उदा. rider@example.com)।' 
+          : 'Please enter a valid email address (e.g. rider@example.com).'
+      );
+      hasError = true;
+    } else {
+      setEmailError('');
+    }
+
+    if (hasError) {
+      setFormError(
+        language === 'hi' 
+          ? 'कृपया फॉर्म में हाइलाइट की गई गलतियां सुधारें (मान्य ईमेल और 10 अंकों का मोबाइल नंबर अनिवार्य है)।' 
+          : 'Please correct highlighted errors (valid email & 10-digit mobile number required).'
+      );
+      if (onShowToast) {
+        onShowToast(
+          language === 'hi' 
+            ? 'कृपया मान्य ईमेल व 10 अंकों का मोबाइल नंबर दर्ज करें।' 
+            : 'Please enter a valid email and 10-digit mobile number.'
+        );
+      }
       return;
     }
 
@@ -216,6 +320,7 @@ export default function BookingPage({
                   <input
                     type="date"
                     className="form-input"
+                    min={todayDateStr}
                     value={pickupDate}
                     onChange={(e) => setPickupDate(e.target.value)}
                   />
@@ -247,6 +352,7 @@ export default function BookingPage({
                   <input
                     type="date"
                     className="form-input"
+                    min={pickupDate || todayDateStr}
                     value={returnDate}
                     onChange={(e) => setReturnDate(e.target.value)}
                   />
@@ -415,11 +521,17 @@ export default function BookingPage({
                       <label className="form-label">{t('riderName')}</label>
                       <input
                         type="text"
-                        className="form-input"
+                        className={`form-input ${nameError ? 'is-invalid' : ''}`}
                         value={riderName}
-                        onChange={(e) => setRiderName(e.target.value)}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        placeholder="e.g. Rahul Verma"
                         required
                       />
+                      {nameError && (
+                        <div className="form-error-text">
+                          <span>{nameError}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Strict +91 and 10-digit mobile number */}
@@ -428,7 +540,7 @@ export default function BookingPage({
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <div style={{
                           background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid var(--border-card)',
+                          border: phoneError ? '1px solid #EF4444' : '1px solid var(--border-card)',
                           borderRadius: '8px',
                           padding: '12px 14px',
                           color: '#cbd5e1',
@@ -443,18 +555,24 @@ export default function BookingPage({
                         </div>
                         <input
                           type="tel"
-                          className="form-input"
+                          className={`form-input ${phoneError ? 'is-invalid' : ''}`}
                           placeholder="9876543210"
                           maxLength={10}
                           value={riderPhone}
-                          onChange={(e) => setRiderPhone(e.target.value.replace(/\D/g, ''))}
+                          onChange={(e) => handlePhoneChange(e.target.value)}
                           style={{ flex: 1 }}
                           required
                         />
                       </div>
-                      <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
-                        {t('countryCodeNote')}
-                      </span>
+                      {phoneError ? (
+                        <div className="form-error-text">
+                          <span>{phoneError}</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
+                          {t('countryCodeNote')}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -462,11 +580,17 @@ export default function BookingPage({
                     <label className="form-label">{t('riderEmail')}</label>
                     <input
                       type="email"
-                      className="form-input"
+                      className={`form-input ${emailError ? 'is-invalid' : ''}`}
+                      placeholder="e.g. rahul.verma@example.com"
                       value={riderEmail}
-                      onChange={(e) => setRiderEmail(e.target.value)}
+                      onChange={(e) => handleEmailChange(e.target.value)}
                       required
                     />
+                    {emailError && (
+                      <div className="form-error-text">
+                        <span>{emailError}</span>
+                      </div>
+                    )}
                   </div>
 
                   <h3 style={{ fontSize: '1.15rem', marginTop: '24px', marginBottom: '12px' }}>

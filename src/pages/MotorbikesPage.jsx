@@ -221,16 +221,10 @@ export default function MotorbikesPage({
                     <span>{language === 'hi' ? 'उपलब्धता: पुष्टि के लिए संपर्क करें' : 'Availability: Contact to confirm'}</span>
                   </div>
 
-                  <div className="bike-card-actions">
-                    <button 
-                      className="btn-card-action btn-primary"
-                      onClick={() => onOpenWhatsApp(bike)}
-                    >
-                      <MessageCircle size={16} />
-                      <span>{t('enquireWhatsApp')}</span>
-                    </button>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'start' }}>
+                  <div className="bike-card-action-rows">
+                    <div className="bike-card-btn-row-1">
                       <button 
+                        type="button"
                         className="btn-card-action btn-outline"
                         onClick={() => onSelectBike(bike)}
                       >
@@ -239,13 +233,18 @@ export default function MotorbikesPage({
                       <BookDropdown
                         bike={bike}
                         buttonText={t('btnBook')}
-                        size="compact"
-                        isOpen={openDropdownBikeId === bike.id}
-                        onToggle={(open) => setOpenDropdownBikeId(open ? bike.id : null)}
                         onShowToast={onShowToast}
                         onStartBooking={onStartBooking}
                       />
                     </div>
+                    <button 
+                      type="button"
+                      className="btn-card-action btn-card-whatsapp"
+                      onClick={() => onOpenWhatsApp(bike)}
+                    >
+                      <MessageCircle size={16} />
+                      <span>{t('enquireWhatsApp')}</span>
+                    </button>
                   </div>
                 </div>
               </div>

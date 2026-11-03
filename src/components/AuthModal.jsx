@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { X, Mail, Smartphone, ShieldCheck, ArrowRight, User } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import AgeVerificationModal from './AgeVerificationModal';
 
 export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   const { t, language } = useLanguage();
 
   // Tab: 'signin' | 'signup' | 'forgot'
   const [activeTab, setActiveTab] = useState('signin');
+  const [showAgePopup, setShowAgePopup] = useState(false);
 
   // Input states
   const [email, setEmail] = useState('');
@@ -27,14 +29,44 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   };
 
   const handleTabSwitch = (tab) => {
+    if (tab === 'signup') {
+      const isAgeVerified = sessionStorage.getItem('road_eagle_age_verified') === 'true';
+      if (!isAgeVerified) {
+        setShowAgePopup(true);
+        return;
+      }
+    }
     setActiveTab(tab);
     resetState();
   };
 
-  // Email validation regex (standard RFC 5322 compatible regex)
+  const handleConfirmAgeSignup = () => {
+    sessionStorage.setItem('road_eagle_age_verified', 'true');
+    setShowAgePopup(false);
+    setActiveTab('signup');
+    resetState();
+  };
+
+  const handleCancelAgeSignup = () => {
+    setShowAgePopup(false);
+    setActiveTab('signin');
+    setErrorMsg(
+      language === 'hi'
+        ? 'साइन अप केवल 18 वर्ष या उससे अधिक आयु के वैध लाइसेंस धारकों के लिए मान्य है।'
+        : 'Sign up is strictly allowed for individuals aged 18+ with a valid driving license.'
+    );
+  };
+
+  // Email validation regex (RFC 5322 compatible regex)
   const validateEmail = (emailStr) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return re.test(String(emailStr).toLowerCase());
+    return re.test(String(emailStr || '').trim().toLowerCase());
+  };
+
+  // Phone validation (10 digits starting with 6,7,8,9)
+  const validatePhone = (phoneStr) => {
+    const clean = String(phoneStr || '').replace(/\D/g, '');
+    return /^[6-9]\d{9}$/.test(clean);
   };
 
   const handleGoogleLogin = () => {
@@ -63,13 +95,23 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
     }
 
     if (activeTab === 'signup') {
+      const isAgeVerified = sessionStorage.getItem('road_eagle_age_verified') === 'true';
+      if (!isAgeVerified) {
+        setShowAgePopup(true);
+        return;
+      }
+
       if (!name.trim()) {
         setErrorMsg(language === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.');
         return;
       }
       const cleanPhone = phone.replace(/\D/g, '');
-      if (cleanPhone.length !== 10) {
-        setErrorMsg(language === 'hi' ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.');
+      if (!validatePhone(cleanPhone)) {
+        setErrorMsg(
+          language === 'hi' 
+            ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू)।' 
+            : 'Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).'
+        );
         return;
       }
     }
@@ -429,6 +471,14 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
             </div>
           </div>
         )}
+
+        {/* 18+ Mandatory Age Verification Pop-up before SignUp */}
+        <AgeVerificationModal
+          isOpen={showAgePopup}
+          onClose={() => setShowAgePopup(false)}
+          onConfirm={handleConfirmAgeSignup}
+          onCancel={handleCancelAgeSignup}
+        />
       </div>
     </div>
   );

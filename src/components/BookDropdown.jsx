@@ -22,7 +22,7 @@ export default function BookDropdown({
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', maxWidth: '100%' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
       <button
         type="button"
         onClick={handleBookClick}
@@ -31,15 +31,15 @@ export default function BookDropdown({
           color: '#ffffff',
           fontWeight: 700,
           borderRadius: '9999px',
-          padding: isCompact ? '8px 14px' : '10px 18px',
-          fontSize: isCompact ? '0.84rem' : '0.88rem',
+          padding: '10px 14px',
+          fontSize: '0.84rem',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
           gap: '6px',
           width: '100%',
-          maxWidth: '220px',
+          boxSizing: 'border-box',
           boxShadow: '0 3px 14px rgba(255, 59, 48, 0.35)',
           cursor: 'pointer',
           border: 'none',

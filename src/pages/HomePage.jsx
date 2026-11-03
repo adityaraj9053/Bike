@@ -201,19 +201,29 @@ export default function HomePage({
                     </div>
                   </div>
 
-                  <div className="bike-card-actions">
-                    <BookDropdown
-                      bike={bike}
-                      buttonText={t('bookThisBike')}
-                      size="compact"
-                      onShowToast={onShowToast}
-                      onStartBooking={onStartBooking}
-                    />
+                  <div className="bike-card-action-rows">
+                    <div className="bike-card-btn-row-1">
+                      <button 
+                        type="button"
+                        className="btn-card-action btn-outline"
+                        onClick={() => onSelectBike(bike)}
+                      >
+                        <span>{t('viewDetails')}</span>
+                      </button>
+                      <BookDropdown
+                        bike={bike}
+                        buttonText={t('btnBook')}
+                        onShowToast={onShowToast}
+                        onStartBooking={onStartBooking}
+                      />
+                    </div>
                     <button 
-                      className="btn-card-action btn-outline"
-                      onClick={() => onSelectBike(bike)}
+                      type="button"
+                      className="btn-card-action btn-card-whatsapp"
+                      onClick={() => onOpenWhatsApp(bike)}
                     >
-                      <span>{t('viewDetails')}</span>
+                      <MessageCircle size={16} />
+                      <span>{t('enquireWhatsApp')}</span>
                     </button>
                   </div>
                 </div>
