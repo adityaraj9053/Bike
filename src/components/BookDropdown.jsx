@@ -27,12 +27,13 @@ export default function BookDropdown({
         type="button"
         onClick={handleBookClick}
         style={{
-          background: '#FF3B30',
+          background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
           color: '#ffffff',
-          fontWeight: 700,
+          fontWeight: 600,
           borderRadius: '9999px',
           padding: '10px 14px',
           fontSize: '0.84rem',
+          letterSpacing: '0.01em',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -40,24 +41,26 @@ export default function BookDropdown({
           gap: '6px',
           width: '100%',
           boxSizing: 'border-box',
-          boxShadow: '0 3px 14px rgba(255, 59, 48, 0.35)',
+          boxShadow: '0 2px 10px rgba(37, 99, 235, 0.25)',
           cursor: 'pointer',
-          border: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
           whiteSpace: 'nowrap',
-          transition: 'all 0.15s ease',
+          transition: 'all 0.2s ease',
           ...buttonStyle
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#FF5247';
+          e.currentTarget.style.background = 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)';
           e.currentTarget.style.transform = 'translateY(-1px)';
+          e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.35)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = buttonStyle.background || '#FF3B30';
+          e.currentTarget.style.background = buttonStyle.background || 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)';
           e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 10px rgba(37, 99, 235, 0.25)';
         }}
       >
         <span>{label}</span>
-        <ArrowRight size={15} />
+        <ArrowRight size={14} />
       </button>
     </div>
   );
