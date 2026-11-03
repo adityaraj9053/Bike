@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { X, Mail, Smartphone, ShieldCheck, ArrowRight, User } from 'lucide-react';
+import { X, Mail, ShieldCheck, ArrowRight, User, Calendar, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import AgeVerificationModal from './AgeVerificationModal';
 
 export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   const { t, language } = useLanguage();
 
   // Tab: 'signin' | 'signup' | 'forgot'
   const [activeTab, setActiveTab] = useState('signin');
-  const [showAgePopup, setShowAgePopup] = useState(false);
 
-  // Input states
+  // Input states - empty strings, only placeholders in UI!
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -28,56 +27,35 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   };
 
   const handleTabSwitch = (tab) => {
-    if (tab === 'signup') {
-      const isAgeVerified = sessionStorage.getItem('road_eagle_age_verified') === 'true';
-      if (!isAgeVerified) {
-        setShowAgePopup(true);
-        return;
-      }
-    }
     setActiveTab(tab);
     resetState();
   };
 
-  const handleConfirmAgeSignup = () => {
-    sessionStorage.setItem('road_eagle_age_verified', 'true');
-    setShowAgePopup(false);
-    setActiveTab('signup');
-    resetState();
+  // Exact age calculation logic from DOB
+  const calculateAge = (birthDateStr) => {
+    if (!birthDateStr) return 0;
+    const today = new Date();
+    const birthDate = new Date(birthDateStr);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
-  const handleCancelAgeSignup = () => {
-    setShowAgePopup(false);
-    setActiveTab('signin');
-    setErrorMsg(
-      language === 'hi'
-        ? 'साइन अप केवल 18 वर्ष या उससे अधिक आयु के वैध लाइसेंस धारकों के लिए मान्य है।'
-        : 'Sign up is strictly allowed for individuals aged 18+ with a valid driving license.'
-    );
-  };
-
-  // Strict Email validation regex (RFC 5322 compatible regex)
+  // Strict RFC 5322 Email regex
   const validateEmail = (emailStr) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return re.test(String(emailStr || '').trim().toLowerCase());
   };
 
-  const handleGoogleLogin = () => {
-    onLogin({
-      name: 'Rider Alex',
-      email: 'alex.rider@example.com',
-      phone: '', // Mobile asked only during booking
-      loginMethod: 'google',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
-    });
-    onClose();
-  };
-
+  // Handle Send OTP (Includes 18+ Age verification logic for Signup!)
   const handleSendCode = (e) => {
     e.preventDefault();
     setErrorMsg('');
 
-    // Strict Email validation
+    // 1. Validate Email
     if (!email || !validateEmail(email)) {
       setErrorMsg(
         language === 'hi' 
@@ -87,27 +65,48 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
       return;
     }
 
+    // 2. Signup Specific Checks: Name & 18+ Age from DOB!
     if (activeTab === 'signup') {
-      const isAgeVerified = sessionStorage.getItem('road_eagle_age_verified') === 'true';
-      if (!isAgeVerified) {
-        setShowAgePopup(true);
-        return;
-      }
-
       if (!name.trim()) {
         setErrorMsg(language === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.');
         return;
       }
+
+      if (!dob) {
+        setErrorMsg(
+          language === 'hi' 
+            ? 'कृपया अपनी जन्म तिथि (Date of Birth) दर्ज करें।' 
+            : 'Please enter your Date of Birth to verify age.'
+        );
+        return;
+      }
+
+      const riderAge = calculateAge(dob);
+
+      // Strict 18+ check logic
+      if (riderAge < 18) {
+        setErrorMsg(
+          language === 'hi' 
+            ? `अस्वीकृत: आपकी आयु ${riderAge} वर्ष है। मोटरबाइक रेंटल और पंजीकरण के लिए न्यूनतम आयु 18+ अनिवार्य है।` 
+            : `Underage (${riderAge} yrs): Registration is strictly restricted to riders aged 18+ with a valid license.`
+        );
+        return;
+      }
+
+      // Mark age verified in session
+      sessionStorage.setItem('road_eagle_age_verified', 'true');
     }
 
+    // If verification passes: move to OTP enter screen!
     setOtpSent(true);
     setInfoMsg(
       language === 'hi' 
-        ? `सत्यापन कोड ${email} पर भेजा गया! (डेमो OTP: 1234)` 
-        : `Email OTP sent to ${email}! (Demo Code: 1234)`
+        ? `सत्यापन कोड ${email} पर भेजा गया! (डेमो कोड: 1234)` 
+        : `Verification code sent to ${email}! (Demo Code: 1234)`
     );
   };
 
+  // Verify OTP and complete login / registration
   const handleVerifyAndSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -123,7 +122,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
       newUser = {
         name: email.split('@')[0],
         email: email.trim(),
-        phone: '', // Mobile will be asked when booking
+        phone: '', // Mobile asked strictly during booking
         loginMethod: 'email',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
       };
@@ -131,7 +130,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
       newUser = {
         name: name.trim(),
         email: email.trim(),
-        phone: '', // Mobile strictly asked during booking as requested
+        dob: dob,
+        phone: '', // Mobile asked strictly during booking
         loginMethod: 'email',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
       };
@@ -153,6 +153,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
     onLogin(null);
     onClose();
   };
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 10000 }}>
@@ -182,14 +184,14 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                   <span>{user.email}</span>
                 </div>
               )}
-              {user.phone && (
+              {user.dob && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1' }}>
-                  <Smartphone size={16} color="#10B981" />
-                  <span>{user.phone}</span>
+                  <Calendar size={16} color="#10B981" />
+                  <span>DOB: {user.dob} (18+ Verified)</span>
                 </div>
               )}
               <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#64748B' }}>
-                {language === 'hi' ? 'सत्यापित राइडर प्रोफ़ाइल' : 'Verified Rider Profile'}
+                {language === 'hi' ? 'सत्यापित 18+ राइडर खाता' : 'Verified 18+ Rider Account'}
               </div>
             </div>
 
@@ -246,7 +248,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                   textAlign: 'center'
                 }}
               >
-                {language === 'hi' ? 'साइन अप' : 'Sign Up'}
+                {language === 'hi' ? 'साइन अप (18+)' : 'Sign Up (18+)'}
               </button>
             </div>
 
@@ -256,49 +258,10 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                 : (language === 'hi' ? 'द रोड ईगल में साइन इन करें' : 'Sign In to The Road Eagle')}
             </h3>
             <p style={{ color: '#94A3B8', fontSize: '0.86rem', textAlign: 'center', marginBottom: '20px' }}>
-              {language === 'hi' 
-                ? 'अपनी मोटरसाइकिल बुकिंग प्रबंधित करें और त्वरित सत्यापन का लाभ उठाएं।'
-                : 'Manage your motorcycle bookings, fast track document verification, and access exclusive member rates.'}
+              {activeTab === 'signup'
+                ? (language === 'hi' ? 'नाम, ईमेल व जन्म तिथि दर्ज करें। ईमेल OTP द्वारा सत्यापन।' : 'Enter Name, Email & Date of Birth. Verification via Email OTP.')
+                : (language === 'hi' ? 'ईमेल OTP से त्वरित साइन इन करें।' : 'Quick passwordless sign in via Email OTP.')}
             </p>
-
-            {/* Google OAuth Button - exactly matching the clean aesthetic */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              style={{
-                width: '100%',
-                background: '#ffffff',
-                color: '#000000',
-                fontWeight: 600,
-                padding: '12px',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                fontSize: '0.92rem',
-                marginBottom: '18px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                cursor: 'pointer',
-                border: 'none'
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>{language === 'hi' ? 'Google के साथ जारी रखें' : 'Continue with Google'}</span>
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-              <span style={{ color: '#64748B', fontSize: '0.78rem', textTransform: 'uppercase' }}>
-                {language === 'hi' ? 'या ईमेल से' : 'or with email'}
-              </span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-            </div>
 
             {/* Password not required note */}
             <div style={{
@@ -314,13 +277,26 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
               gap: '8px'
             }}>
               <ShieldCheck size={16} style={{ flexShrink: 0 }} />
-              <span>{language === 'hi' ? 'पासवर्ड की आवश्यकता नहीं! त्वरित OTP सत्यापन।' : 'Password not required! Quick OTP login.'}</span>
+              <span>{language === 'hi' ? 'पासवर्ड की आवश्यकता नहीं! ईमेल OTP सत्यापन।' : 'Password not required! Email OTP verification.'}</span>
             </div>
 
             {/* Error & Info Messages */}
             {errorMsg && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid #EF4444', borderRadius: '8px', padding: '10px', fontSize: '0.85rem', marginBottom: '14px' }}>
-                {errorMsg}
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                color: '#EF4444',
+                border: '1.5px solid #EF4444',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontSize: '0.86rem',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+                lineHeight: 1.45
+              }}>
+                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>{errorMsg}</span>
               </div>
             )}
             {infoMsg && (
@@ -329,43 +305,87 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
               </div>
             )}
 
-            {/* Email Form */}
+            {/* Form */}
             <form onSubmit={otpSent ? handleVerifyAndSubmit : handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {activeTab === 'signup' && (
-                <div className="form-group">
-                  <label className="form-label">{language === 'hi' ? 'पूरा नाम' : 'FULL NAME'}</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder={language === 'hi' ? 'उदा. राहुल शर्मा' : 'e.g. John Doe'}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
+              {/* If OTP not sent yet: Show Name, Email, DOB fields */}
+              {!otpSent ? (
+                <>
+                  {activeTab === 'signup' && (
+                    <div className="form-group">
+                      <label className="form-label">{language === 'hi' ? 'पूरा नाम' : 'FULL NAME'}</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. Rahul Verma"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (errorMsg) setErrorMsg('');
+                        }}
+                        required
+                      />
+                    </div>
+                  )}
 
-              {/* Email Address with validation check */}
-              <div className="form-group">
-                <label className="form-label">{language === 'hi' ? 'ईमेल पता' : 'EMAIL ADDRESS'}</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  placeholder="name@example.com"
-                  value={email}
-                  disabled={otpSent}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errorMsg) setErrorMsg('');
-                  }}
-                  required
-                />
-              </div>
+                  {/* Email Address with placeholder */}
+                  <div className="form-group">
+                    <label className="form-label">{language === 'hi' ? 'ईमेल पता' : 'EMAIL ADDRESS'}</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      placeholder="rider@example.com"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errorMsg) setErrorMsg('');
+                      }}
+                      required
+                    />
+                  </div>
 
-              {/* OTP Field if sent */}
-              {otpSent && (
+                  {/* DOB field on signup form */}
+                  {activeTab === 'signup' && (
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Calendar size={14} color="#00A3FF" />
+                        <span>{language === 'hi' ? 'जन्म तिथि (DOB - 18+ अनिवार्य)' : 'DATE OF BIRTH (18+ MANDATORY)'}</span>
+                      </label>
+                      <input
+                        type="date"
+                        className="form-input"
+                        max={todayStr}
+                        value={dob}
+                        onChange={(e) => {
+                          setDob(e.target.value);
+                          if (errorMsg) setErrorMsg('');
+                        }}
+                        required
+                      />
+                      <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
+                        {language === 'hi' 
+                          ? 'Send OTP पर क्लिक करने पर 18+ आयु सत्यापित की जाएगी।' 
+                          : 'Age will be verified automatically when clicking Send OTP.'}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* OTP Screen when 18+ check passed */
                 <div className="form-group">
-                  <label className="form-label">{language === 'hi' ? '4-अंकों का OTP कोड दर्ज करें' : 'ENTER 4-DIGIT CODE'}</label>
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    marginBottom: '14px',
+                    fontSize: '0.84rem',
+                    color: '#34D399',
+                    textAlign: 'center'
+                  }}>
+                    <span>{language === 'hi' ? `18+ आयु सत्यापित! OTP भेजा गया:` : `18+ Verified! OTP sent to:`} <strong>{email}</strong></span>
+                  </div>
+
+                  <label className="form-label">{language === 'hi' ? '4-अंकों का ईमेल OTP दर्ज करें' : 'ENTER 4-DIGIT EMAIL OTP'}</label>
                   <input
                     type="text"
                     className="form-input"
@@ -377,7 +397,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                     required
                     autoFocus
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
                     <button
                       type="button"
                       onClick={() => setOtp('1234')}
@@ -405,8 +425,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                   {otpSent 
                     ? (language === 'hi' ? 'सत्यापित करें और आगे बढ़ें' : 'Verify & Continue')
                     : (activeTab === 'signup' 
-                        ? (language === 'hi' ? 'खाता बनाएं' : 'Create Free Account') 
-                        : (language === 'hi' ? 'ईमेल से जारी रखें' : 'Continue with email'))}
+                        ? (language === 'hi' ? 'OTP भेजें' : 'Send OTP') 
+                        : (language === 'hi' ? 'ईमेल OTP प्राप्त करें' : 'Get Email OTP'))}
                 </span>
                 <ArrowRight size={17} />
               </button>
@@ -426,14 +446,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
             </div>
           </div>
         )}
-
-        {/* 18+ Mandatory Age Verification Pop-up before SignUp */}
-        <AgeVerificationModal
-          isOpen={showAgePopup}
-          onClose={() => setShowAgePopup(false)}
-          onConfirm={handleConfirmAgeSignup}
-          onCancel={handleCancelAgeSignup}
-        />
       </div>
     </div>
   );

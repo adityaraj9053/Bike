@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, MessageCircle, Send, CheckCircle2, PhoneCall, AlertCircle } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
+import { COUNTRY_CODES } from '../data/countries';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToast, user }) {
   const { t, language } = useLanguage();
   const [bikeId, setBikeId] = useState(selectedBike?.id || 'night-hawk-cruiser');
   const [fullName, setFullName] = useState(user?.name || '');
-  const [phone, setPhone] = useState(user?.phone ? user.phone.replace('+91 ', '') : '');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [phone, setPhone] = useState(user?.phone ? user.phone.replace(/^\+\d+\s*/, '') : '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [message, setMessage] = useState('');
@@ -248,29 +250,42 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
                 />
               </div>
 
-              {/* Phone number input with +91 default */}
+              {/* Phone number input with international country code dropdown */}
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">
                   {t('riderPhone')} {isEmailOnlyUser ? ' *' : ''}
                 </label>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <div style={{
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid var(--border-card)',
-                    borderRadius: '8px',
-                    padding: '11px 8px',
-                    color: '#cbd5e1',
-                    fontWeight: 700,
-                    fontSize: '0.82rem',
-                    flexShrink: 0
-                  }}>
-                    +91
-                  </div>
+                  <select
+                    className="form-select"
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    style={{
+                      width: 'auto',
+                      minWidth: '95px',
+                      maxWidth: '110px',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid var(--border-card)',
+                      borderRadius: '8px',
+                      padding: '11px 6px',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={`enq-${c.country}-${c.code}`} value={c.code} style={{ background: '#0e1422', color: '#ffffff' }}>
+                        {c.flag} {c.code}
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="tel"
                     className="form-input"
-                    placeholder="9876543210"
-                    maxLength={10}
+                    placeholder={countryCode === '+91' ? '9876543210' : 'Mobile number'}
+                    maxLength={15}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                     style={{ flex: 1, minWidth: 0, boxSizing: 'border-box' }}

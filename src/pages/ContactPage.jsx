@@ -12,11 +12,13 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
+import { COUNTRY_CODES } from '../data/countries';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function ContactPage({ onShowToast, onOpenWhatsApp, onGoBack }) {
   const { t, language } = useLanguage();
   const [fullName, setFullName] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [selectedBikeId, setSelectedBikeId] = useState('');
@@ -27,9 +29,10 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp, onGoBack }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!phoneNumber || phoneNumber.replace(/\D/g, '').length !== 10) {
+    const clean = phoneNumber.replace(/\D/g, '');
+    if (!clean || (countryCode === '+91' ? clean.length !== 10 : clean.length < 7)) {
       if (onShowToast) {
-        onShowToast(language === 'hi' ? 'कृपया 10 अंकों का मान्य मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.');
+        onShowToast(language === 'hi' ? 'कृपया एक मान्य मोबाइल नंबर दर्ज करें।' : 'Please enter a valid mobile number.');
       }
       return;
     }
@@ -115,22 +118,35 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp, onGoBack }) {
                   <div className="form-group">
                     <label className="form-label">{t('riderPhone')}</label>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <div style={{
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid var(--border-card)',
-                        borderRadius: '8px',
-                        padding: '12px 10px',
-                        color: '#cbd5e1',
-                        fontWeight: 700,
-                        fontSize: '0.85rem'
-                      }}>
-                        +91
-                      </div>
+                      <select
+                        className="form-select"
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        style={{
+                          width: 'auto',
+                          minWidth: '95px',
+                          maxWidth: '115px',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid var(--border-card)',
+                          borderRadius: '8px',
+                          padding: '11px 8px',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {COUNTRY_CODES.map((c) => (
+                          <option key={`contact-${c.country}-${c.code}`} value={c.code} style={{ background: '#0e1422', color: '#ffffff' }}>
+                            {c.flag} {c.code}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         type="tel"
                         className="form-input"
-                        placeholder="9876543210"
-                        maxLength={10}
+                        placeholder={countryCode === '+91' ? '9876543210' : 'Mobile number'}
+                        maxLength={15}
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                         style={{ flex: 1 }}

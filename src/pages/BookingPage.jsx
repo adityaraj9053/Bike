@@ -14,6 +14,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
+import { COUNTRY_CODES } from '../data/countries';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function BookingPage({ 
@@ -37,9 +38,10 @@ export default function BookingPage({
   });
   const [returnTime, setReturnTime] = useState('08:00 PM');
   
-  // Rider details with default +91 country code and 10-digit mobile
+  // Rider details - empty strings by default so inputs show placeholders!
   const [riderName, setRiderName] = useState(user?.name || '');
-  const [riderPhone, setRiderPhone] = useState(user?.phone ? user.phone.replace('+91 ', '').replace(/\D/g, '') : '');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [riderPhone, setRiderPhone] = useState(user?.phone ? user.phone.replace(/^\+\d+\s*/, '').replace(/\D/g, '') : '');
   const [riderEmail, setRiderEmail] = useState(user?.email || '');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -56,19 +58,23 @@ export default function BookingPage({
     return re.test(String(str || '').trim().toLowerCase());
   };
 
-  const validatePhone = (str) => {
+  // International phone validation: digits only, length between 7 and 14
+  const validatePhone = (str, code) => {
     const clean = String(str || '').replace(/\D/g, '');
-    return /^[6-9]\d{9}$/.test(clean);
+    if (code === '+91') {
+      return /^[6-9]\d{9}$/.test(clean);
+    }
+    return clean.length >= 7 && clean.length <= 14;
   };
 
   const handlePhoneChange = (val) => {
     const clean = val.replace(/\D/g, '');
     setRiderPhone(clean);
-    if (clean.length > 0 && !validatePhone(clean)) {
+    if (clean.length > 0 && !validatePhone(clean, countryCode)) {
       setPhoneError(
-        language === 'hi' 
-          ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6-9 से शुरू)।' 
-          : 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).'
+        countryCode === '+91'
+          ? (language === 'hi' ? '10 अंकों का मान्य भारतीय नंबर दर्ज करें (6-9 से शुरू)' : 'Enter a valid 10-digit number (starting with 6-9)')
+          : (language === 'hi' ? 'कृपया मान्य मोबाइल नंबर दर्ज करें (7-14 अंक)' : 'Please enter a valid phone number (7-14 digits)')
       );
     } else {
       setPhoneError('');
@@ -153,13 +159,13 @@ export default function BookingPage({
       setNameError('');
     }
 
-    // 2. Strict Phone check (10 digits starting with 6-9)
+    // 2. Phone check with country code
     const cleanPhone = riderPhone.replace(/\D/g, '');
-    if (!validatePhone(cleanPhone)) {
+    if (!validatePhone(cleanPhone, countryCode)) {
       setPhoneError(
-        language === 'hi' 
-          ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू)।' 
-          : 'Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).'
+        countryCode === '+91'
+          ? (language === 'hi' ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू)।' : 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).')
+          : (language === 'hi' ? 'कृपया मान्य मोबाइल नंबर दर्ज करें (7-14 अंक)।' : 'Please enter a valid mobile number (7-14 digits).')
       );
       hasError = true;
     } else {
@@ -513,7 +519,7 @@ export default function BookingPage({
                   </div>
                 </div>
 
-                {/* Rider Details with +91 Country Code and 10 Digits */}
+                {/* Rider Details with International Country Code Dropdown */}
                 <div className="booking-card">
                   <h3 style={{ fontSize: '1.3rem', marginBottom: '16px' }}>{t('riderInfo')}</h3>
                   <div className="booking-form-grid" style={{ margin: 0 }}>
@@ -534,30 +540,42 @@ export default function BookingPage({
                       )}
                     </div>
 
-                    {/* Strict +91 and 10-digit mobile number */}
+                    {/* Mobile number with international country code dropdown */}
                     <div className="form-group">
                       <label className="form-label">{t('riderPhone')}</label>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <div style={{
-                          background: 'rgba(255,255,255,0.06)',
-                          border: phoneError ? '1px solid #EF4444' : '1px solid var(--border-card)',
-                          borderRadius: '8px',
-                          padding: '12px 14px',
-                          color: '#cbd5e1',
-                          fontWeight: 700,
-                          fontSize: '0.92rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
-                          <span>🇮🇳</span>
-                          <span>+91</span>
-                        </div>
+                        <select
+                          className="form-select"
+                          value={countryCode}
+                          onChange={(e) => {
+                            setCountryCode(e.target.value);
+                            if (phoneError) setPhoneError('');
+                          }}
+                          style={{
+                            width: 'auto',
+                            minWidth: '110px',
+                            maxWidth: '130px',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: phoneError ? '1px solid #EF4444' : '1px solid var(--border-card)',
+                            borderRadius: '8px',
+                            padding: '12px 10px',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={`${c.country}-${c.code}`} value={c.code} style={{ background: '#0e1422', color: '#ffffff' }}>
+                              {c.flag} {c.code}
+                            </option>
+                          ))}
+                        </select>
                         <input
                           type="tel"
                           className={`form-input ${phoneError ? 'is-invalid' : ''}`}
-                          placeholder="9876543210"
-                          maxLength={10}
+                          placeholder={countryCode === '+91' ? '9876543210' : 'Mobile number'}
+                          maxLength={15}
                           value={riderPhone}
                           onChange={(e) => handlePhoneChange(e.target.value)}
                           style={{ flex: 1 }}
@@ -570,7 +588,7 @@ export default function BookingPage({
                         </div>
                       ) : (
                         <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
-                          {t('countryCodeNote')}
+                          Select your country code and enter active mobile number
                         </span>
                       )}
                     </div>
