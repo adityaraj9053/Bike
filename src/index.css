@@ -2278,3 +2278,31 @@ html, body {
   overflow-y: auto !important;
   overflow-x: hidden !important;
 }
+
+
+/* ================= REFINED LUXURY CTA BANNER (DARK, HIGH-CONTRAST & ELEGANT) ================= */
+.cta-banner {
+  background: radial-gradient(circle at 80% 20%, rgba(2, 132, 199, 0.18) 0%, rgba(13, 19, 31, 0.98) 70%),
+              linear-gradient(180deg, #131A29 0%, #0A0F1A 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 32px rgba(2, 132, 199, 0.08) !important;
+  border-radius: 28px !important;
+}
+
+.cta-banner-bg-graphic {
+  border: 12px dashed rgba(255, 255, 255, 0.06) !important;
+}
+
+.cta-banner-title {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.cta-banner-subtitle {
+  color: #94A3B8 !important;
+  font-size: 1.05rem !important;
+  max-width: 580px !important;
+  margin: 0 auto 28px !important;
+  line-height: 1.6 !important;
+}

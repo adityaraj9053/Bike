@@ -487,46 +487,89 @@ export default function BookingPage({
                 </div>
 
                 {/* Payment Breakdown Card */}
-                <div className="booking-card">
-                  <h3 style={{ fontSize: '1.3rem', marginBottom: '16px' }}>{t('paymentBreakdown')}</h3>
+                {/* Payment Breakdown Card: Rich, High-Contrast Luxury Palette */}
+                <div className="booking-card" style={{
+                  background: 'linear-gradient(180deg, #131A29 0%, #0D131F 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '1.3rem', margin: 0, fontWeight: 700, color: '#FFFFFF' }}>{t('paymentBreakdown')}</h3>
+                    <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: '9999px', background: 'rgba(255, 255, 255, 0.06)', color: '#94A3B8', fontWeight: 600 }}>
+                      Transparent Fare
+                    </span>
+                  </div>
                   
-                  <div className="breakdown-row">
-                    <span style={{ color: '#cbd5e1' }}>{t('rentalCharges')} (₹{bike.pricePerDay.toLocaleString()} × {rentalDays} {language === 'hi' ? 'दिन' : 'days'})</span>
-                    <span style={{ fontWeight: 600 }}>₹{rentalTotal.toLocaleString()}</span>
+                  <div className="breakdown-row" style={{ padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <span style={{ color: '#E2E8F0', fontSize: '0.92rem' }}>{t('rentalCharges')} ({rentalDays} {language === 'hi' ? 'दिन' : 'days'} × ₹{bike.pricePerDay.toLocaleString()})</span>
+                    <span style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '1.05rem' }}>₹{rentalTotal.toLocaleString()}</span>
                   </div>
 
-                  <div className="breakdown-row">
-                    <span style={{ color: '#00A3FF' }}>{t('securityDeposit')}</span>
-                    <span style={{ fontWeight: 600, color: '#00A3FF' }}>₹{securityDeposit.toLocaleString()}*</span>
+                  <div className="breakdown-row" style={{ padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: '#F59E0B', fontWeight: 600, fontSize: '0.92rem' }}>🛡️ {t('securityDeposit')}</span>
+                    </div>
+                    <span style={{ fontWeight: 700, color: '#FBBF24', fontSize: '1.05rem' }}>₹{securityDeposit.toLocaleString()}*</span>
                   </div>
 
-                  <div className="breakdown-row total">
-                    <span>{t('totalPayable')}</span>
-                    <span style={{ color: '#00A3FF' }}>₹{totalPayable.toLocaleString()}</span>
+                  {/* Total Payable Row: Bold High Contrast Amber/Gold Accent */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px 18px',
+                    margin: '16px 0 14px',
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    borderRadius: '12px'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#CBD5E1', display: 'block', fontWeight: 700 }}>
+                        {t('totalPayable')}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Inclusive of refundable deposit</span>
+                    </div>
+                    <span style={{ fontSize: '1.85rem', fontWeight: 900, color: '#FCD34D', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}>
+                      ₹{totalPayable.toLocaleString()}
+                    </span>
                   </div>
 
-                  <div className="notice-box" style={{ marginTop: '20px', marginBottom: 0 }}>
-                    <Info size={20} color="#00A3FF" style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <p style={{ fontSize: '0.82rem' }}>
+                  {/* Refund info box with distinct emerald border */}
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.06)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <ShieldCheck size={20} color="#34D399" style={{ flexShrink: 0 }} />
+                    <p style={{ fontSize: '0.82rem', color: '#D1FAE5', margin: 0, lineHeight: 1.5 }}>
                       {language === 'hi'
-                        ? <><strong>सुरक्षा जमा रिफंड:</strong> ₹{bike.deposit.toLocaleString()}* की सुरक्षा जमा राशि वाहन वापसी और निरीक्षण के 24-48 घंटों के भीतर पूर्ण रूप से वापस कर दी जाती है।</>
-                        : <><strong>Refund Information:</strong> The deposit of ₹{bike.deposit.toLocaleString()}* is fully refundable within 24-48 hours post return vehicle inspection.</>}
+                        ? <><strong>100% रिफंडेबल डिपॉजिट:</strong> ₹{bike.deposit.toLocaleString()}* की सुरक्षा जमा राशि वाहन वापसी के 24-48 घंटों में स्वतः आपके खाते में वापस कर दी जाती है।</>
+                        : <><strong>100% Refundable Deposit:</strong> ₹{bike.deposit.toLocaleString()}* deposit is automatically credited back within 24-48 hrs post vehicle check-in.</>}
                     </p>
                   </div>
                 </div>
 
-                {/* Rider Details with International Country Code Dropdown */}
-                <div className="booking-card">
-                  <h3 style={{ fontSize: '1.3rem', marginBottom: '16px' }}>{t('riderInfo')}</h3>
+                {/* Rider Details Card: Rich Elevated Contrast */}
+                <div className="booking-card" style={{
+                  background: 'linear-gradient(180deg, #131A29 0%, #0D131F 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)'
+                }}>
+                  <h3 style={{ fontSize: '1.3rem', marginBottom: '16px', color: '#FFFFFF', fontWeight: 700 }}>{t('riderInfo')}</h3>
                   <div className="booking-form-grid" style={{ margin: 0 }}>
                     <div className="form-group">
-                      <label className="form-label">{t('riderName')}</label>
+                      <label className="form-label" style={{ color: '#E2E8F0' }}>{t('riderName')}</label>
                       <input
                         type="text"
                         className={`form-input ${nameError ? 'is-invalid' : ''}`}
                         value={riderName}
                         onChange={(e) => handleNameChange(e.target.value)}
                         placeholder="e.g. Rahul Verma"
+                        style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)' }}
                         required
                       />
                       {nameError && (
@@ -538,7 +581,7 @@ export default function BookingPage({
 
                     {/* Mobile number with international country code dropdown */}
                     <div className="form-group">
-                      <label className="form-label">{t('riderPhone')}</label>
+                      <label className="form-label" style={{ color: '#E2E8F0' }}>{t('riderPhone')}</label>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <select
                           className="form-select"
@@ -551,8 +594,8 @@ export default function BookingPage({
                             width: 'auto',
                             minWidth: '110px',
                             maxWidth: '130px',
-                            background: 'rgba(255,255,255,0.06)',
-                            border: phoneError ? '1px solid #EF4444' : '1px solid var(--border-card)',
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: phoneError ? '1px solid #EF4444' : '1px solid rgba(255, 255, 255, 0.15)',
                             borderRadius: '8px',
                             padding: '12px 10px',
                             color: '#ffffff',
@@ -574,7 +617,7 @@ export default function BookingPage({
                           maxLength={15}
                           value={riderPhone}
                           onChange={(e) => handlePhoneChange(e.target.value)}
-                          style={{ flex: 1 }}
+                          style={{ flex: 1, background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)' }}
                           required
                         />
                       </div>
@@ -591,13 +634,14 @@ export default function BookingPage({
                   </div>
 
                   <div className="form-group" style={{ marginTop: '14px' }}>
-                    <label className="form-label">{t('riderEmail')}</label>
+                    <label className="form-label" style={{ color: '#E2E8F0' }}>{t('riderEmail')}</label>
                     <input
                       type="email"
                       className={`form-input ${emailError ? 'is-invalid' : ''}`}
                       placeholder="e.g. rahul.verma@example.com"
                       value={riderEmail}
                       onChange={(e) => handleEmailChange(e.target.value)}
+                      style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)' }}
                       required
                     />
                     {emailError && (
@@ -607,32 +651,45 @@ export default function BookingPage({
                     )}
                   </div>
 
-                  <h3 style={{ fontSize: '1.15rem', marginTop: '24px', marginBottom: '12px' }}>
+                  <h3 style={{ fontSize: '1.15rem', marginTop: '24px', marginBottom: '12px', color: '#FFFFFF', fontWeight: 700 }}>
                     {language === 'hi' ? 'भुगतान का तरीका' : 'Payment Method'}
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                     {[
-                      { id: 'upi', label: language === 'hi' ? 'तुरंत UPI / QR' : 'Instant UPI / QR' },
-                      { id: 'card', label: language === 'hi' ? 'क्रेडिट / डेबिट कार्ड' : 'Credit / Debit Card' },
-                      { id: 'pickup', label: language === 'hi' ? 'पिकअप पर भुगतान' : 'Pay at Hub Pickup' }
-                    ].map((m) => (
-                      <div
-                        key={m.id}
-                        onClick={() => setPaymentMethod(m.id)}
-                        style={{
-                          background: paymentMethod === m.id ? 'rgba(0, 163, 255, 0.15)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${paymentMethod === m.id ? '#00A3FF' : 'var(--border-card)'}`,
-                          borderRadius: '8px',
-                          padding: '12px',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          fontSize: '0.85rem'
-                        }}
-                      >
-                        {m.label}
-                      </div>
-                    ))}
+                      { id: 'upi', label: language === 'hi' ? 'तुरंत UPI / QR' : 'Instant UPI / QR', icon: '⚡' },
+                      { id: 'card', label: language === 'hi' ? 'क्रेडिट / डेबिट कार्ड' : 'Credit / Debit Card', icon: '💳' },
+                      { id: 'pickup', label: language === 'hi' ? 'पिकअप पर भुगतान' : 'Pay at Hub Pickup', icon: '📍' }
+                    ].map((m) => {
+                      const isSelected = paymentMethod === m.id;
+                      return (
+                        <div
+                          key={m.id}
+                          onClick={() => setPaymentMethod(m.id)}
+                          style={{
+                            background: isSelected 
+                              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%)' 
+                              : 'rgba(255, 255, 255, 0.03)',
+                            border: isSelected ? '1.5px solid #FCD34D' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px',
+                            padding: '14px 10px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            fontSize: '0.86rem',
+                            color: isSelected ? '#FFFFFF' : '#94A3B8',
+                            boxShadow: isSelected ? '0 4px 14px rgba(252, 211, 77, 0.2)' : 'none',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>{m.icon}</span>
+                          <span>{m.label}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

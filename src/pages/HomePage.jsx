@@ -408,19 +408,17 @@ export default function HomePage({
             <div className="cta-banner-buttons">
               <button 
                 className="btn-primary" 
-                style={{ background: '#080C14', color: '#ffffff' }}
                 onClick={() => onNavigate('motorbikes')}
               >
                 <Bike size={18} />
                 <span>{t('exploreBikes')}</span>
               </button>
               <button 
-                className="btn-whatsapp-dark" 
-                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: '#080C14' }}
+                className="btn-whatsapp" 
                 onClick={() => onOpenWhatsApp()}
               >
-                <MessageCircle size={18} color="#080C14" />
-                <span style={{ fontWeight: 700 }}>{language === 'hi' ? 'व्हाट्सएप पूछताछ' : 'Contact on WhatsApp'}</span>
+                <MessageCircle size={18} />
+                <span>{language === 'hi' ? 'व्हाट्सएप पूछताछ' : 'Contact on WhatsApp'}</span>
               </button>
             </div>
           </div>
