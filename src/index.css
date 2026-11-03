@@ -1873,3 +1873,118 @@ html, body, #root, .app-container {
     justify-content: center !important;
   }
 }
+
+
+/* ================= COMPREHENSIVE RESPONSIVE GRIDS ================= */
+.details-guidelines-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 70px;
+}
+
+.details-actions-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.quick-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.stats-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 36px 24px;
+  text-align: center;
+  margin-bottom: 70px;
+}
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.value-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 820px) {
+  .details-guidelines-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    margin-bottom: 40px !important;
+  }
+  .stats-strip-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    padding: 24px 16px !important;
+    gap: 16px !important;
+  }
+  .values-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  .two-col-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .details-actions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .form-row-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .stats-strip-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+  .values-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .quick-specs-grid {
+    padding: 12px 8px !important;
+    gap: 6px !important;
+  }
+  .specs-table-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .spec-cell {
+    padding: 12px 14px !important;
+  }
+}

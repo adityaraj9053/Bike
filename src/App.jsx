@@ -18,11 +18,29 @@ import { BIKES_DATA } from './data/bikes';
 import { MessageCircle, CheckCircle2 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
+function parseHash() {
+  const raw = window.location.hash.replace(/^#/, '');
+  if (!raw) return { page: 'home', bikeId: null, category: 'all' };
+  const [page, queryString] = raw.split('?');
+  const params = new URLSearchParams(queryString || '');
+  return {
+    page: page || 'home',
+    bikeId: params.get('bike'),
+    category: params.get('cat') || 'all'
+  };
+}
+
 function MainApp() {
   const { t, language } = useLanguage();
-  const [activePage, setActivePage] = useState('home');
-  const [selectedBike, setSelectedBike] = useState(BIKES_DATA[0]);
-  const [catalogCategory, setCatalogCategory] = useState('all');
+
+  const initialHash = parseHash();
+  const initialBike = initialHash.bikeId 
+    ? BIKES_DATA.find(b => b.id === initialHash.bikeId) || BIKES_DATA[0]
+    : BIKES_DATA[0];
+
+  const [activePage, setActivePage] = useState(initialHash.page || 'home');
+  const [selectedBike, setSelectedBike] = useState(initialBike);
+  const [catalogCategory, setCatalogCategory] = useState(initialHash.category || 'all');
 
   // Modals
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
@@ -59,22 +77,100 @@ function MainApp() {
     }, 4000);
   };
 
-  const handleNavigate = (page, category = 'all') => {
+  // ================= BROWSER BACK / FORWARD NAVIGATION (POPSTATE) =================
+  useEffect(() => {
+    // Initialize history state on load
+    const currentHash = window.location.hash || '#home';
+    const initData = parseHash();
+    window.history.replaceState(
+      { page: initData.page, category: initData.category, bikeId: initData.bikeId },
+      '',
+      currentHash
+    );
+
+    const handlePopState = (event) => {
+      // Close open modals if any was open
+      if (isEnquiryOpen || isAuthOpen || isQuoteOpen || isAgeModalOpen) {
+        setIsEnquiryOpen(false);
+        setIsAuthOpen(false);
+        setIsQuoteOpen(false);
+        setIsAgeModalOpen(false);
+      }
+
+      let targetPage = 'home';
+      let targetBikeId = null;
+      let targetCat = 'all';
+
+      if (event.state && event.state.page) {
+        targetPage = event.state.page;
+        targetBikeId = event.state.bikeId;
+        targetCat = event.state.category || 'all';
+      } else {
+        const parsed = parseHash();
+        targetPage = parsed.page;
+        targetBikeId = parsed.bikeId;
+        targetCat = parsed.category;
+      }
+
+      setActivePage(targetPage);
+      if (targetCat) setCatalogCategory(targetCat);
+      if (targetBikeId) {
+        const found = BIKES_DATA.find((b) => b.id === targetBikeId);
+        if (found) setSelectedBike(found);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isEnquiryOpen, isAuthOpen, isQuoteOpen, isAgeModalOpen]);
+
+  // Navigate with history push
+  const handleNavigate = (page, category = 'all', pushHistory = true) => {
     setActivePage(page);
     if (category) {
       setCatalogCategory(category);
     }
+
+    if (pushHistory) {
+      const hash = `#${page}${category !== 'all' ? `?cat=${category}` : ''}`;
+      window.history.pushState(
+        { page, category, bikeId: selectedBike?.id },
+        '',
+        hash
+      );
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSelectBike = (bike) => {
+  const handleSelectBike = (bike, pushHistory = true) => {
     setSelectedBike(bike);
     setActivePage('bike-details');
+
+    if (pushHistory) {
+      window.history.pushState(
+        { page: 'bike-details', bikeId: bike.id, category: catalogCategory },
+        '',
+        `#bike-details?bike=${bike.id}`
+      );
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Strictly 18+ check on booking:
-  // When user clicks book, verify 18+ popup first, then strictly show booking form!
+  const proceedToBookingPage = (bike) => {
+    const target = bike || selectedBike || BIKES_DATA[0];
+    setSelectedBike(target);
+    setActivePage('booking');
+
+    window.history.pushState(
+      { page: 'booking', bikeId: target.id, category: catalogCategory },
+      '',
+      `#booking?bike=${target.id}`
+    );
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Strictly 18+ check on booking
   const handleStartBooking = (bike) => {
     const targetBike = bike || selectedBike || BIKES_DATA[0];
     setPendingBookingBike(targetBike);
@@ -82,9 +178,7 @@ function MainApp() {
     if (!isAgeVerified) {
       setIsAgeModalOpen(true);
     } else {
-      setSelectedBike(targetBike);
-      setActivePage('booking');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      proceedToBookingPage(targetBike);
     }
   };
 
@@ -92,9 +186,7 @@ function MainApp() {
     setIsAgeVerified(true);
     sessionStorage.setItem('road_eagle_age_verified', 'true');
     const target = pendingBookingBike || selectedBike || BIKES_DATA[0];
-    setSelectedBike(target);
-    setActivePage('booking');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    proceedToBookingPage(target);
     showToast(
       language === 'hi' 
         ? '18+ आयु सत्यापित! कृपया आरक्षण फॉर्म भरें।' 
@@ -108,16 +200,6 @@ function MainApp() {
         ? 'रेंटल केवल 18 वर्ष या उससे अधिक आयु के वैध लाइसेंस धारकों के लिए है।' 
         : 'Rental is strictly restricted to individuals 18+ with a valid driving license.'
     );
-  };
-
-  // Top Nav Book Now action:
-  // If on details page, starts booking directly; otherwise opens bikes fleet ("Bikes khuljae")
-  const handleTopBookNow = () => {
-    if (activePage === 'bike-details') {
-      handleStartBooking(selectedBike);
-    } else {
-      handleNavigate('motorbikes');
-    }
   };
 
   const handleOpenWhatsApp = (bike = null) => {
@@ -151,22 +233,20 @@ function MainApp() {
 
   return (
     <div className="app-container">
-      {/* Top Navbar with Red Book Now & Language Selector */}
+      {/* Top Navbar */}
       <Navbar
         activePage={activePage}
-        setActivePage={handleNavigate}
-        onOpenWhatsApp={() => handleOpenWhatsApp()}
+        setActivePage={(page) => handleNavigate(page, 'all', true)}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onBookNow={handleTopBookNow}
         user={user}
       />
 
       {/* Main Page View */}
-      <main>
+      <main style={{ minHeight: '80vh', paddingBottom: '60px' }}>
         {activePage === 'home' && (
           <HomePage
-            onNavigate={handleNavigate}
-            onSelectBike={handleSelectBike}
+            onNavigate={(page, cat) => handleNavigate(page, cat, true)}
+            onSelectBike={(bike) => handleSelectBike(bike, true)}
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
             onShowToast={showToast}
@@ -175,7 +255,7 @@ function MainApp() {
 
         {activePage === 'motorbikes' && (
           <MotorbikesPage
-            onSelectBike={handleSelectBike}
+            onSelectBike={(bike) => handleSelectBike(bike, true)}
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
             onShowToast={showToast}
@@ -186,10 +266,10 @@ function MainApp() {
         {activePage === 'bike-details' && (
           <BikeDetailsPage
             bike={selectedBike}
-            onNavigate={handleNavigate}
+            onNavigate={(page) => handleNavigate(page, 'all', true)}
             onStartBooking={handleStartBooking}
             onOpenWhatsApp={handleOpenWhatsApp}
-            onSelectBike={handleSelectBike}
+            onSelectBike={(bike) => handleSelectBike(bike, true)}
             onShowToast={showToast}
           />
         )}
@@ -197,7 +277,7 @@ function MainApp() {
         {activePage === 'booking' && (
           <BookingPage
             selectedBike={selectedBike}
-            onNavigate={handleNavigate}
+            onNavigate={(page) => handleNavigate(page, 'all', true)}
             onOpenQuote={handleOpenQuote}
             onShowToast={showToast}
             onOpenWhatsApp={handleOpenWhatsApp}
@@ -206,11 +286,11 @@ function MainApp() {
         )}
 
         {activePage === 'how-it-works' && (
-          <HowItWorksPage onNavigate={handleNavigate} />
+          <HowItWorksPage onNavigate={(page) => handleNavigate(page, 'all', true)} />
         )}
 
         {activePage === 'about-us' && (
-          <AboutUsPage onNavigate={handleNavigate} />
+          <AboutUsPage onNavigate={(page) => handleNavigate(page, 'all', true)} />
         )}
 
         {activePage === 'contact' && (
@@ -222,9 +302,9 @@ function MainApp() {
       </main>
 
       {/* Global Footer */}
-      <Footer setActivePage={handleNavigate} />
+      <Footer setActivePage={(page) => handleNavigate(page, 'all', true)} />
 
-      {/* ================= WHATSAPP ENQUIRE OPTION IN GREEN IN LEFT SIDE ================= */}
+      {/* Floating WhatsApp Quick Action Button in Green */}
       <div 
         onClick={() => handleOpenWhatsApp()}
         className="floating-whatsapp-btn"

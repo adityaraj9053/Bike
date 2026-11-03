@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { 
   Phone, 
-  MessageCircle, 
   Mail, 
   MapPin, 
   Clock, 
+  MessageCircle, 
   Send, 
   CheckCircle2, 
-  ExternalLink 
+  Compass,
+  AlertCircle
 } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
+  const { t, language } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -23,90 +26,67 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!phoneNumber || phoneNumber.replace(/\D/g, '').length !== 10) {
+      if (onShowToast) {
+        onShowToast(language === 'hi' ? 'कृपया 10 अंकों का मान्य मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.');
+      }
+      return;
+    }
     setSubmitted(true);
-    onShowToast(`Thank you, ${fullName || 'Rider'}! Your enquiry has been received.`);
+    if (onShowToast) {
+      onShowToast(language === 'hi' ? 'संदेश प्राप्त हुआ! हमारी टीम शीघ्र ही आपसे संपर्क करेगी।' : 'Inquiry received! Our team will contact you shortly.');
+    }
     setTimeout(() => {
       setSubmitted(false);
       setFullName('');
       setPhoneNumber('');
       setEmail('');
       setMessage('');
-    }, 3000);
-  };
-
-  const handleOpenMaps = () => {
-    window.open('https://maps.google.com/?q=123+Rider+Avenue+Sector+5', '_blank');
+    }, 2500);
   };
 
   return (
-    <div className="contact-page" style={{ padding: '50px 0 90px' }}>
+    <div className="contact-page" style={{ padding: '40px 0 90px' }}>
       <div className="container">
-        {/* Header */}
-        <div className="section-header" style={{ maxWidth: '780px', margin: '0 auto 40px' }}>
+        {/* Page Header */}
+        <div className="section-header" style={{ marginBottom: '60px' }}>
+          <span className="section-pretitle">{language === 'hi' ? 'हमसे संपर्क करें' : 'GET IN TOUCH'}</span>
           <h1 className="section-title" style={{ fontSize: '3rem' }}>
-            Let’s Get You on the <span className="text-cyan">Road.</span>
+            {language === 'hi' ? 'हम आपकी सहायता के लिए तैयार हैं' : "We're Here to Help You Ride"}
           </h1>
           <p className="section-subtitle">
-            Have questions about our bikes, rental prices, or availability? Get in touch with our team anytime.
+            {language === 'hi'
+              ? 'बाइक्स, रेंटल नीतियों या कस्टम टूरिंग पैकेज के बारे में कोई प्रश्न? सीधे कॉल करें या संदेश भेजें।'
+              : 'Have questions about bike availability, rental rules, or custom route requirements? Reach out directly.'}
           </p>
         </div>
 
-        {/* 4 Contact Info Mini Cards */}
-        <div className="contact-info-cards">
-          <div className="contact-mini-card">
-            <div className="contact-mini-icon"><Phone size={22} /></div>
-            <div>
-              <div className="contact-mini-label">Phone Number</div>
-              <a href="tel:+919876543210" className="contact-mini-val">+91 98765 43210</a>
-            </div>
-          </div>
-
-          <div className="contact-mini-card" style={{ cursor: 'pointer' }} onClick={() => onOpenWhatsApp()}>
-            <div className="contact-mini-icon"><MessageCircle size={22} color="#00A3FF" /></div>
-            <div>
-              <div className="contact-mini-label">WhatsApp Concierge</div>
-              <span className="contact-mini-val">+91 98765 43210</span>
-            </div>
-          </div>
-
-          <div className="contact-mini-card">
-            <div className="contact-mini-icon"><Mail size={22} /></div>
-            <div>
-              <div className="contact-mini-label">Email Address</div>
-              <a href="mailto:support@theroadeagle.com" className="contact-mini-val">support@theroadeagle.com</a>
-            </div>
-          </div>
-
-          <div className="contact-mini-card">
-            <div className="contact-mini-icon"><MapPin size={22} /></div>
-            <div>
-              <div className="contact-mini-label">Business Address</div>
-              <span className="contact-mini-val">123 Rider Avenue, Sector 5, [City Name]</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Main 2-Column Section */}
         <div className="contact-grid">
-          {/* Left: Send an Enquiry Form */}
-          <div className="booking-card">
-            <h2 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Send an Enquiry</h2>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '24px' }}>
-              Fill in your rental request and our concierge will verify vehicle schedule and confirm within 15 minutes.
+          {/* Left Column: Contact Form */}
+          <div className="booking-card" style={{ padding: '36px' }}>
+            <h2 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>
+              {language === 'hi' ? 'त्वरित संदेश या पूछताछ भेजें' : 'Send an Instant Message'}
+            </h2>
+            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '28px' }}>
+              {language === 'hi' ? 'फॉर्म भरें और हमारी टीम 15 मिनट में आपसे संपर्क करेगी।' : 'Fill out the form and our concierge team will respond within 15 minutes.'}
             </p>
 
             {submitted ? (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <CheckCircle2 size={54} color="#10B981" style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Enquiry Submitted Successfully!</h3>
-                <p style={{ color: '#94A3B8', fontSize: '0.95rem' }}>
-                  Our team has received your request and will reach out via WhatsApp / phone immediately.
+              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>
+                  {language === 'hi' ? 'संदेश सफलतापूर्वक भेजा गया!' : 'Message Sent Successfully!'}
+                </h3>
+                <p style={{ color: '#94A3B8', fontSize: '0.92rem' }}>
+                  {language === 'hi'
+                    ? 'आपकी पूछताछ प्राप्त हो गई है। हमारी टीम जल्द ही आपसे जुड़ेगी।'
+                    : 'We have received your enquiry. A rental concierge agent will call or message you shortly.'}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="form-group">
-                  <label className="form-label">FULL NAME</label>
+                  <label className="form-label">{t('riderName')}</label>
                   <input
                     type="text"
                     className="form-input"
@@ -117,20 +97,35 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="form-row-2">
                   <div className="form-group">
-                    <label className="form-label">PHONE NUMBER</label>
-                    <input
-                      type="tel"
-                      className="form-input"
-                      placeholder="+91 98765 00000"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      required
-                    />
+                    <label className="form-label">{t('riderPhone')}</label>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <div style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid var(--border-card)',
+                        borderRadius: '8px',
+                        padding: '12px 10px',
+                        color: '#cbd5e1',
+                        fontWeight: 700,
+                        fontSize: '0.85rem'
+                      }}>
+                        +91
+                      </div>
+                      <input
+                        type="tel"
+                        className="form-input"
+                        placeholder="9876543210"
+                        maxLength={10}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                        style={{ flex: 1 }}
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">EMAIL ADDRESS (OPTIONAL)</label>
+                    <label className="form-label">{t('riderEmail')}</label>
                     <input
                       type="email"
                       className="form-input"
@@ -142,13 +137,13 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">PREFERRED BIKE</label>
+                  <label className="form-label">{language === 'hi' ? 'पसंदीदा बाइक' : 'PREFERRED BIKE'}</label>
                   <select
                     className="form-select"
                     value={selectedBikeId}
                     onChange={(e) => setSelectedBikeId(e.target.value)}
                   >
-                    <option value="">Select a Bike (or All Options)</option>
+                    <option value="">{language === 'hi' ? 'बाइक चुनें (या सभी विकल्प)' : 'Select a Bike (or All Options)'}</option>
                     {BIKES_DATA.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name} ({b.model}) - ₹{b.pricePerDay}/day
@@ -157,9 +152,9 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
                   </select>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div className="form-row-2">
                   <div className="form-group">
-                    <label className="form-label">START DATE</label>
+                    <label className="form-label">{t('pickupDate')}</label>
                     <input
                       type="date"
                       className="form-input"
@@ -168,7 +163,7 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">END DATE</label>
+                    <label className="form-label">{t('returnDate')}</label>
                     <input
                       type="date"
                       className="form-input"
@@ -179,11 +174,11 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">MESSAGE</label>
+                  <label className="form-label">{language === 'hi' ? 'संदेश / विशेष आवश्यकताएं' : 'YOUR MESSAGE / SPECIAL REQUIREMENTS'}</label>
                   <textarea
                     rows="3"
                     className="form-textarea"
-                    placeholder="How can we help you?"
+                    placeholder={language === 'hi' ? 'रूट, डिलीवरी या अन्य प्रश्न...' : 'Tell us about your trip plans, helmet sizes, or pickup hub questions...'}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   ></textarea>
@@ -192,92 +187,112 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp }) {
                 <button
                   type="submit"
                   className="btn-primary"
-                  style={{ width: '100%', padding: '14px', justifyContent: 'center', fontSize: '1rem', marginTop: '8px' }}
+                  style={{ width: '100%', padding: '14px', justifyContent: 'center', marginTop: '6px' }}
                 >
-                  <Send size={16} />
-                  <span>Submit Enquiry</span>
+                  <Send size={18} />
+                  <span>{language === 'hi' ? 'पूछताछ भेजें' : 'Submit Rental Inquiry'}</span>
                 </button>
               </form>
             )}
           </div>
 
-          {/* Right Column: Location, Hours & Quick WhatsApp */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Our Location */}
+          {/* Right Column: Direct Info Cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Phone & Direct Concierge */}
             <div className="booking-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                <MapPin size={22} color="#00A3FF" />
-                <h3 style={{ fontSize: '1.25rem' }}>Our Location</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '10px',
+                  background: 'rgba(0, 163, 255, 0.15)',
+                  color: '#00A3FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Phone size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem' }}>{language === 'hi' ? 'सीधा फोन कॉल' : 'Direct Phone Support'}</h3>
+                  <span style={{ fontSize: '0.82rem', color: '#94A3B8' }}>{language === 'hi' ? '24/7 तुरंत सहायता' : 'Instant 24/7 Roadside Assistance'}</span>
+                </div>
               </div>
-              <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '20px', lineHeight: '1.6' }}>
-                Find us at our main hub located in the heart of the city with convenient metro connectivity and parking.
+              <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '16px' }}>
+                Speak directly with our vehicle dispatchers for urgent bookings or route emergencies.
               </p>
-              <div style={{
-                height: '140px',
-                borderRadius: '10px',
-                background: 'radial-gradient(circle at center, #1e293b 0%, #0d121c 100%)',
-                border: '1px solid var(--border-light)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                marginBottom: '18px'
-              }}>
-                <MapPin size={32} color="#00A3FF" />
-                <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>123 Rider Avenue, Sector 5</span>
-              </div>
-              <button
-                className="btn-outline"
-                style={{ width: '100%', justifyContent: 'center' }}
-                onClick={handleOpenMaps}
+              <a
+                href="tel:+919876543210"
+                className="btn-primary"
+                style={{ width: '100%', padding: '12px', justifyContent: 'center' }}
               >
-                <span>Open in Google Maps</span>
-                <ExternalLink size={16} />
-              </button>
+                <Phone size={16} />
+                <span>+91 98765 43210</span>
+              </a>
             </div>
 
-            {/* Business Hours */}
+            {/* WhatsApp Quick Action */}
             <div className="booking-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <Clock size={22} color="#00A3FF" />
-                <h3 style={{ fontSize: '1.25rem' }}>Business Hours</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '10px',
+                  background: 'rgba(37, 211, 102, 0.15)',
+                  color: '#25D366',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <MessageCircle size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem' }}>{language === 'hi' ? 'व्हाट्सएप चैट' : 'WhatsApp Concierge'}</h3>
+                  <span style={{ fontSize: '0.82rem', color: '#94A3B8' }}>{language === 'hi' ? 'औसत जवाब समय: 2 मिनट' : 'Average Response: 2 Minutes'}</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
-                  <span style={{ color: '#94A3B8' }}>Monday - Friday</span>
-                  <strong style={{ color: '#ffffff' }}>09:00 AM - 09:00 PM</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
-                  <span style={{ color: '#94A3B8' }}>Saturday</span>
-                  <strong style={{ color: '#ffffff' }}>09:00 AM - 10:00 PM</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#94A3B8' }}>Sunday</span>
-                  <strong style={{ color: '#ffffff' }}>10:00 AM - 08:00 PM</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Need a Quick Response? WhatsApp Card */}
-            <div style={{
-              background: 'linear-gradient(135deg, #0284C7 0%, #00A3FF 100%)',
-              borderRadius: '16px',
-              padding: '28px 24px',
-              color: '#070E1B'
-            }}>
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '8px' }}>Need a Quick Response?</h3>
-              <p style={{ fontSize: '0.9rem', color: 'rgba(7, 14, 27, 0.85)', marginBottom: '20px', lineHeight: '1.5' }}>
-                Chat with our experts instantly on WhatsApp for any urgent questions or same-day bookings.
+              <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '16px' }}>
+                Get live bike walk-around photos, check real-time hub availability, and fast-track identity document verification.
               </p>
               <button
-                className="btn-whatsapp-dark"
-                style={{ width: '100%', justifyContent: 'center' }}
+                type="button"
+                className="btn-whatsapp"
+                style={{ width: '100%', padding: '12px', justifyContent: 'center', background: '#25D366', color: '#ffffff' }}
                 onClick={() => onOpenWhatsApp()}
               >
-                <MessageCircle size={18} />
-                <span>Contact on WhatsApp</span>
+                <MessageCircle size={16} />
+                <span>{language === 'hi' ? 'व्हाट्सएप पर चैट करें' : 'Chat on WhatsApp'}</span>
               </button>
+            </div>
+
+            {/* Hub Locations & Operational Timings */}
+            <div className="booking-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: '#00A3FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <MapPin size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem' }}>{language === 'hi' ? 'मुख्य हब पता' : 'Primary Hub Location'}</h3>
+                  <span style={{ fontSize: '0.82rem', color: '#94A3B8' }}>Central Dispatch Hub</span>
+                </div>
+              </div>
+              <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '16px' }}>
+                123 Rider Avenue, Sector 5, [City Name]<br />
+                <span style={{ color: '#64748B', fontSize: '0.82rem' }}>Landmark: 500m from Central Metro Station</span>
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38BDF8', fontSize: '0.85rem' }}>
+                <Clock size={16} />
+                <span>Open 7 Days a Week: 09:00 AM – 09:00 PM</span>
+              </div>
             </div>
           </div>
         </div>
