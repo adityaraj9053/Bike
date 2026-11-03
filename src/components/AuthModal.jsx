@@ -13,7 +13,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   // Input states
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -57,23 +56,17 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
     );
   };
 
-  // Email validation regex (RFC 5322 compatible regex)
+  // Strict Email validation regex (RFC 5322 compatible regex)
   const validateEmail = (emailStr) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return re.test(String(emailStr || '').trim().toLowerCase());
-  };
-
-  // Phone validation (10 digits starting with 6,7,8,9)
-  const validatePhone = (phoneStr) => {
-    const clean = String(phoneStr || '').replace(/\D/g, '');
-    return /^[6-9]\d{9}$/.test(clean);
   };
 
   const handleGoogleLogin = () => {
     onLogin({
       name: 'Rider Alex',
       email: 'alex.rider@example.com',
-      phone: '+91 98765 43210',
+      phone: '', // Mobile asked only during booking
       loginMethod: 'google',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
     });
@@ -105,22 +98,13 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
         setErrorMsg(language === 'hi' ? 'कृपया अपना पूरा नाम दर्ज करें।' : 'Please enter your full name.');
         return;
       }
-      const cleanPhone = phone.replace(/\D/g, '');
-      if (!validatePhone(cleanPhone)) {
-        setErrorMsg(
-          language === 'hi' 
-            ? 'कृपया 10 अंकों का मान्य भारतीय मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू)।' 
-            : 'Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8, or 9).'
-        );
-        return;
-      }
     }
 
     setOtpSent(true);
     setInfoMsg(
       language === 'hi' 
-        ? `OTP ${email} पर भेजा गया! (डेमो कोड: 1234)` 
-        : `Verification code sent to ${email}! (Demo Code: 1234)`
+        ? `सत्यापन कोड ${email} पर भेजा गया! (डेमो OTP: 1234)` 
+        : `Email OTP sent to ${email}! (Demo Code: 1234)`
     );
   };
 
@@ -139,7 +123,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
       newUser = {
         name: email.split('@')[0],
         email: email.trim(),
-        phone: '', // Email login without phone; enquiry modal will ask phone as per requirement
+        phone: '', // Mobile will be asked when booking
         loginMethod: 'email',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
       };
@@ -147,8 +131,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
       newUser = {
         name: name.trim(),
         email: email.trim(),
-        phone: `+91 ${phone.replace(/\D/g, '')}`,
-        loginMethod: 'both',
+        phone: '', // Mobile strictly asked during booking as requested
+        loginMethod: 'email',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'
       };
     } else if (activeTab === 'forgot') {
@@ -348,46 +332,17 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
             {/* Email Form */}
             <form onSubmit={otpSent ? handleVerifyAndSubmit : handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {activeTab === 'signup' && (
-                <>
-                  <div className="form-group">
-                    <label className="form-label">{language === 'hi' ? 'पूरा नाम' : 'FULL NAME'}</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder={language === 'hi' ? 'उदा. राहुल शर्मा' : 'e.g. John Doe'}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">{language === 'hi' ? 'मोबाइल नंबर' : 'MOBILE NUMBER'}</label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <div style={{
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid var(--border-card)',
-                        borderRadius: '8px',
-                        padding: '12px 12px',
-                        color: '#cbd5e1',
-                        fontWeight: 700,
-                        fontSize: '0.9rem'
-                      }}>
-                        +91
-                      </div>
-                      <input
-                        type="tel"
-                        className="form-input"
-                        placeholder="9876543210"
-                        maxLength={10}
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                        style={{ flex: 1 }}
-                        required
-                      />
-                    </div>
-                  </div>
-                </>
+                <div className="form-group">
+                  <label className="form-label">{language === 'hi' ? 'पूरा नाम' : 'FULL NAME'}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder={language === 'hi' ? 'उदा. राहुल शर्मा' : 'e.g. John Doe'}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
               )}
 
               {/* Email Address with validation check */}

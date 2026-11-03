@@ -38,9 +38,9 @@ export default function BookingPage({
   const [returnTime, setReturnTime] = useState('08:00 PM');
   
   // Rider details with default +91 country code and 10-digit mobile
-  const [riderName, setRiderName] = useState(user?.name || 'Rahul Verma');
-  const [riderPhone, setRiderPhone] = useState(user?.phone ? user.phone.replace('+91 ', '').replace(/\D/g, '') : '9876543210');
-  const [riderEmail, setRiderEmail] = useState(user?.email || 'rahul.verma@example.com');
+  const [riderName, setRiderName] = useState(user?.name || '');
+  const [riderPhone, setRiderPhone] = useState(user?.phone ? user.phone.replace('+91 ', '').replace(/\D/g, '') : '');
+  const [riderEmail, setRiderEmail] = useState(user?.email || '');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
   const [formError, setFormError] = useState('');
