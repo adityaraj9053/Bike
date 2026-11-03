@@ -19,8 +19,10 @@ import {
 } from 'lucide-react-native';
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -33,7 +35,7 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
   const handleSubmit = () => {
     setSubmitted(true);
     if (onShowToast) {
-      onShowToast(`Thank you, ${fullName || 'Rider'}! Your enquiry has been received.`);
+      onShowToast(t('contactScreen.toastSuccess', { name: fullName || 'Rider' }));
     }
     setTimeout(() => {
       setSubmitted(false);
@@ -56,13 +58,13 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.pretitle}>GET IN TOUCH</Text>
+        <Text style={styles.pretitle}>{t('contactScreen.pretitle')}</Text>
         <Text style={styles.title}>
-          Let's Get You on the{'\n'}
-          <Text style={{ color: COLORS.accentCyan }}>Road.</Text>
+          {t('contactScreen.title1')}{'\n'}
+          <Text style={{ color: COLORS.accentCyan }}>{t('contactScreen.title2')}</Text>
         </Text>
         <Text style={styles.subtitle}>
-          Have questions about our bikes, rental prices, or availability? Get in touch with our team anytime.
+          {t('contactScreen.subtitle')}
         </Text>
       </View>
 
@@ -78,7 +80,7 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             <Phone size={20} color={COLORS.accentCyan} />
           </View>
           <View style={styles.miniTextWrap}>
-            <Text style={styles.miniLabel}>Phone Number</Text>
+            <Text style={styles.miniLabel}>{t('contactScreen.phoneLabel')}</Text>
             <Text style={styles.miniValue}>+91 98765 43210</Text>
           </View>
         </TouchableOpacity>
@@ -93,7 +95,7 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             <MessageCircle size={20} color={COLORS.whatsappGreen} />
           </View>
           <View style={styles.miniTextWrap}>
-            <Text style={styles.miniLabel}>WhatsApp Concierge</Text>
+            <Text style={styles.miniLabel}>{t('contactScreen.whatsappLabel')}</Text>
             <Text style={styles.miniValue}>+91 98765 43210</Text>
           </View>
         </TouchableOpacity>
@@ -108,7 +110,7 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             <Mail size={20} color={COLORS.accentCyan} />
           </View>
           <View style={styles.miniTextWrap}>
-            <Text style={styles.miniLabel}>Email Address</Text>
+            <Text style={styles.miniLabel}>{t('contactScreen.emailLabel')}</Text>
             <Text style={styles.miniValue}>support@theroadeagle.com</Text>
           </View>
         </TouchableOpacity>
@@ -123,34 +125,34 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             <MapPin size={20} color={COLORS.accentCyan} />
           </View>
           <View style={styles.miniTextWrap}>
-            <Text style={styles.miniLabel}>Business Hub Location</Text>
-            <Text style={styles.miniValue}>123 Rider Avenue, Sector 5</Text>
+            <Text style={styles.miniLabel}>{t('contactScreen.locationLabel')}</Text>
+            <Text style={styles.miniValue}>{t('contactScreen.locationAddress')}</Text>
           </View>
         </TouchableOpacity>
       </View>
 
       {/* Main Enquiry Form */}
       <View style={[styles.formCard, SHADOWS.card]}>
-        <Text style={styles.formTitle}>Send an Enquiry</Text>
+        <Text style={styles.formTitle}>{t('contactScreen.formTitle')}</Text>
         <Text style={styles.formSubtitle}>
-          Fill in your details and our concierge will verify vehicle schedule and confirm within 15 minutes.
+          {t('contactScreen.formSubtitle')}
         </Text>
 
         {submitted ? (
           <View style={styles.submittedWrap}>
             <CheckCircle2 size={50} color={COLORS.statusAvailable} />
-            <Text style={styles.submittedTitle}>Message Received!</Text>
+            <Text style={styles.submittedTitle}>{t('contactScreen.submittedTitle')}</Text>
             <Text style={styles.submittedDesc}>
-              Thank you for reaching out. A representative will contact you at your provided phone number shortly.
+              {t('contactScreen.submittedDesc')}
             </Text>
           </View>
         ) : (
           <View style={styles.formFields}>
             <View style={styles.inputWrap}>
-              <Text style={styles.inputLabel}>Full Name</Text>
+              <Text style={styles.inputLabel}>{t('contactScreen.fullName')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Rider name"
+                placeholder={t('contactScreen.fullNamePlaceholder')}
                 placeholderTextColor={COLORS.textMuted}
                 value={fullName}
                 onChangeText={setFullName}
@@ -158,10 +160,10 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             </View>
 
             <View style={styles.inputWrap}>
-              <Text style={styles.inputLabel}>Phone Number</Text>
+              <Text style={styles.inputLabel}>{t('contactScreen.phoneNumber')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="+91 98765 43210"
+                placeholder={t('contactScreen.phonePlaceholder')}
                 placeholderTextColor={COLORS.textMuted}
                 keyboardType="phone-pad"
                 value={phone}
@@ -170,10 +172,10 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             </View>
 
             <View style={styles.inputWrap}>
-              <Text style={styles.inputLabel}>Email Address</Text>
+              <Text style={styles.inputLabel}>{t('contactScreen.emailAddress')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="rider@example.com"
+                placeholder={t('contactScreen.emailPlaceholder')}
                 placeholderTextColor={COLORS.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -183,7 +185,7 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             </View>
 
             <View style={styles.inputWrap}>
-              <Text style={styles.inputLabel}>Preferred Motorcycle</Text>
+              <Text style={styles.inputLabel}>{t('contactScreen.preferredMotorcycle')}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -209,20 +211,20 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
 
             <View style={styles.datesRow}>
               <View style={[styles.inputWrap, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>Start Date</Text>
+                <Text style={styles.inputLabel}>{t('contactScreen.startDate')}</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="YYYY-MM-DD"
+                  placeholder={t('contactScreen.datePlaceholder')}
                   placeholderTextColor={COLORS.textMuted}
                   value={startDate}
                   onChangeText={setStartDate}
                 />
               </View>
               <View style={[styles.inputWrap, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>End Date</Text>
+                <Text style={styles.inputLabel}>{t('contactScreen.endDate')}</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="YYYY-MM-DD"
+                  placeholder={t('contactScreen.datePlaceholder')}
                   placeholderTextColor={COLORS.textMuted}
                   value={endDate}
                   onChangeText={setEndDate}
@@ -231,10 +233,10 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
             </View>
 
             <View style={styles.inputWrap}>
-              <Text style={styles.inputLabel}>Message / Tour Itinerary</Text>
+              <Text style={styles.inputLabel}>{t('contactScreen.messageLabel')}</Text>
               <TextInput
                 style={[styles.textInput, styles.textArea]}
-                placeholder="Let us know your destination, gear requirements, or queries..."
+                placeholder={t('contactScreen.messagePlaceholder')}
                 placeholderTextColor={COLORS.textMuted}
                 multiline
                 numberOfLines={3}
@@ -249,7 +251,7 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
               activeOpacity={0.8}
             >
               <Send size={16} color="#050B14" />
-              <Text style={styles.submitBtnText}>Send Rental Enquiry</Text>
+              <Text style={styles.submitBtnText}>{t('contactScreen.sendEnquiryBtn')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -261,10 +263,10 @@ export default function ContactScreen({ onShowToast, onOpenWhatsApp }) {
           <Clock size={22} color={COLORS.accentCyan} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.hoursTitle}>Operating Hours</Text>
+          <Text style={styles.hoursTitle}>{t('contactScreen.operatingHours')}</Text>
           <Text style={styles.hoursDesc}>
-            Monday - Sunday: 7:00 AM - 10:00 PM{'\n'}
-            Doorstep delivery & pickup available on prior schedule.
+            {t('contactScreen.hoursDetail')}{'\n'}
+            {t('contactScreen.doorstepDetail')}
           </Text>
         </View>
       </View>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import {
   Compass,
   Bike,
@@ -33,6 +34,8 @@ function BottomTabNavigator({
   onOpenBookModal,
   onShowToast,
 }) {
+  const { t } = useTranslation();
+
   return (
     <Tab.Navigator
       screenOptions={({ navigation, route }) => ({
@@ -42,7 +45,7 @@ function BottomTabNavigator({
             user={user}
             onOpenAuth={onOpenAuth}
             onOpenWhatsApp={() => onOpenWhatsApp()}
-            onStartBooking={() => onStartBooking && onStartBooking()}
+            onStartBooking={() => navigation.navigate('Motorbikes')}
           />
         ),
         tabBarStyle: {
@@ -64,13 +67,15 @@ function BottomTabNavigator({
       <Tab.Screen
         name="Home"
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: t('home') || 'Home',
           tabBarIcon: ({ color, size }) => <Compass size={22} color={color} />,
         }}
       >
         {(props) => (
           <HomeScreen
             {...props}
+            user={user}
+            onOpenAuth={onOpenAuth}
             onSelectBike={onSelectBike}
             onStartBooking={onStartBooking}
             onOpenWhatsApp={onOpenWhatsApp}
@@ -82,13 +87,15 @@ function BottomTabNavigator({
       <Tab.Screen
         name="Motorbikes"
         options={{
-          tabBarLabel: 'Fleet',
+          tabBarLabel: t('fleet') || 'Fleet',
           tabBarIcon: ({ color, size }) => <Bike size={22} color={color} />,
         }}
       >
         {(props) => (
           <MotorbikesScreen
             {...props}
+            user={user}
+            onOpenAuth={onOpenAuth}
             onSelectBike={onSelectBike}
             onStartBooking={onStartBooking}
             onOpenBookModal={onOpenBookModal}
@@ -99,7 +106,7 @@ function BottomTabNavigator({
       <Tab.Screen
         name="HowItWorks"
         options={{
-          tabBarLabel: 'Guide',
+          tabBarLabel: t('guide') || 'Guide',
           tabBarIcon: ({ color, size }) => <HelpCircle size={22} color={color} />,
         }}
         component={HowItWorksScreen}
@@ -108,7 +115,7 @@ function BottomTabNavigator({
       <Tab.Screen
         name="AboutUs"
         options={{
-          tabBarLabel: 'About',
+          tabBarLabel: t('about') || 'About',
           tabBarIcon: ({ color, size }) => <Users size={22} color={color} />,
         }}
         component={AboutUsScreen}
@@ -117,7 +124,7 @@ function BottomTabNavigator({
       <Tab.Screen
         name="Contact"
         options={{
-          tabBarLabel: 'Contact',
+          tabBarLabel: t('contact') || 'Contact',
           tabBarIcon: ({ color, size }) => <PhoneCall size={22} color={color} />,
         }}
       >
@@ -143,6 +150,7 @@ export default function RootNavigator({
   onOpenBookModal,
   onShowToast,
 }) {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -178,6 +186,7 @@ export default function RootNavigator({
               user={user}
               onOpenAuth={onOpenAuth}
               onOpenWhatsApp={() => onOpenWhatsApp(route?.params?.bike)}
+              onStartBooking={() => navigation.navigate('MainTabs', { screen: 'Motorbikes' })}
             />
           ),
         })}
@@ -185,6 +194,8 @@ export default function RootNavigator({
         {(props) => (
           <BikeDetailsScreen
             {...props}
+            user={user}
+            onOpenAuth={onOpenAuth}
             onStartBooking={onStartBooking}
             onOpenWhatsApp={onOpenWhatsApp}
             onOpenBookModal={onOpenBookModal}
@@ -200,10 +211,11 @@ export default function RootNavigator({
             <CustomHeader
               navigation={navigation}
               showBack
-              title="Reservation"
+              title={t('reservation.title') || 'Reservation'}
               user={user}
               onOpenAuth={onOpenAuth}
               onOpenWhatsApp={() => onOpenWhatsApp()}
+              onStartBooking={() => navigation.navigate('MainTabs', { screen: 'Motorbikes' })}
             />
           ),
         })}

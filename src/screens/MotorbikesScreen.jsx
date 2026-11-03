@@ -12,6 +12,7 @@ import { Search, ArrowUpDown } from 'lucide-react-native';
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS } from '../theme/colors';
 import BikeCard from '../components/BikeCard';
+import { useTranslation } from 'react-i18next';
 
 export default function MotorbikesScreen({
   navigation,
@@ -19,7 +20,10 @@ export default function MotorbikesScreen({
   onSelectBike,
   onStartBooking,
   onOpenBookModal,
+  user,
+  onOpenAuth,
 }) {
+  const { t } = useTranslation();
   const initialCategory = route?.params?.initialCategory || 'all';
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,12 +103,12 @@ export default function MotorbikesScreen({
     >
       {/* Page Header */}
       <View style={styles.headerBox}>
-        <Text style={styles.pretitle}>PREMIUM FLEET</Text>
+        <Text style={styles.pretitle}>{t('fleetScreen.pretitle')}</Text>
         <Text style={styles.title}>
-          Find Your <Text style={{ color: COLORS.accentCyan }}>Ideal Machine</Text>
+          {t('fleetScreen.title1')} <Text style={{ color: COLORS.accentCyan }}>{t('fleetScreen.title2')}</Text>
         </Text>
         <Text style={styles.subtitle}>
-          Factory serviced, fully insured, with complimentary helmet and emergency support.
+          {t('fleetScreen.subtitle')}
         </Text>
       </View>
 
@@ -114,7 +118,7 @@ export default function MotorbikesScreen({
           <Search size={18} color={COLORS.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by model, name, or cc..."
+            placeholder={t('fleetScreen.searchPlaceholder')}
             placeholderTextColor={COLORS.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -147,7 +151,7 @@ export default function MotorbikesScreen({
               activeOpacity={0.8}
             >
               <Text style={[styles.categoryChipText, isActive && styles.categoryChipTextActive]}>
-                {cat.label}
+                {t(`categories.${cat.id === 'scooters' ? 'scooter' : cat.id === 'sports' ? 'superbike' : cat.id}`) || cat.label}
               </Text>
             </TouchableOpacity>
           );
@@ -157,7 +161,7 @@ export default function MotorbikesScreen({
       {/* Results Count & Horizontal Grid Columns Selector */}
       <View style={styles.resultsHeader}>
         <Text style={styles.resultsCount}>
-          Showing <Text style={{ color: COLORS.accentCyan, fontWeight: '800' }}>{filteredBikes.length}</Text> available bikes
+          {t('fleetScreen.showingBikes', { count: filteredBikes.length })}
         </Text>
 
         <View style={styles.gridToggleRow}>
@@ -192,6 +196,8 @@ export default function MotorbikesScreen({
             }}
             onStartBooking={onStartBooking}
             onOpenBookModal={onOpenBookModal}
+            user={user}
+            onOpenAuth={onOpenAuth}
             compact={isCompact}
             style={{ width: cardWidth, marginBottom: 0 }}
           />

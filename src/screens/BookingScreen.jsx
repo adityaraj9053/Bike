@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native';
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 const PICKUP_TIMES = [
   '09:00 AM (Hub Opens)',
@@ -48,6 +49,31 @@ const RETURN_TIMES = [
   '10:00 PM',
 ];
 
+const COUNTRY_DIAL_CODES = [
+  { code: 'IN', dialCode: '+91', name: 'India', flag: '🇮🇳' },
+  { code: 'US', dialCode: '+1', name: 'United States', flag: '🇺🇸' },
+  { code: 'GB', dialCode: '+44', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'AE', dialCode: '+971', name: 'United Arab Emirates', flag: '🇦🇪' },
+  { code: 'CA', dialCode: '+1', name: 'Canada', flag: '🇨🇦' },
+  { code: 'AU', dialCode: '+61', name: 'Australia', flag: '🇦🇺' },
+  { code: 'DE', dialCode: '+49', name: 'Germany', flag: '🇩🇪' },
+  { code: 'FR', dialCode: '+33', name: 'France', flag: '🇫🇷' },
+  { code: 'SG', dialCode: '+65', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'SA', dialCode: '+966', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: 'JP', dialCode: '+81', name: 'Japan', flag: '🇯🇵' },
+  { code: 'MY', dialCode: '+60', name: 'Malaysia', flag: '🇲🇾' },
+  { code: 'ID', dialCode: '+62', name: 'Indonesia', flag: '🇮🇩' },
+  { code: 'TH', dialCode: '+66', name: 'Thailand', flag: '🇹🇭' },
+  { code: 'ZA', dialCode: '+27', name: 'South Africa', flag: '🇿🇦' },
+  { code: 'IT', dialCode: '+39', name: 'Italy', flag: '🇮🇹' },
+  { code: 'ES', dialCode: '+34', name: 'Spain', flag: '🇪🇸' },
+  { code: 'NL', dialCode: '+31', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'NZ', dialCode: '+64', name: 'New Zealand', flag: '🇳🇿' },
+  { code: 'NP', dialCode: '+977', name: 'Nepal', flag: '🇳🇵' },
+  { code: 'LK', dialCode: '+94', name: 'Sri Lanka', flag: '🇱🇰' },
+  { code: 'BD', dialCode: '+880', name: 'Bangladesh', flag: '🇧🇩' },
+];
+
 export default function BookingScreen({
   route,
   navigation,
@@ -55,6 +81,7 @@ export default function BookingScreen({
   onShowToast,
   onOpenWhatsApp,
 }) {
+  const { t } = useTranslation();
   const selectedBike = route?.params?.bike || BIKES_DATA[0];
   const [step, setStep] = useState(1);
 
@@ -67,15 +94,46 @@ export default function BookingScreen({
   const [returnDate, setReturnDate] = useState('11/17/2024');
   const [returnTime, setReturnTime] = useState('08:00 PM (Hub Closes)');
 
+  // Country Code & Phone Number state
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+91');
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_DIAL_CODES[0]);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [isCountryPickerOpen, setIsCountryPickerOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+
   // Dropdown modal state
   const [activePicker, setActivePicker] = useState(null); // 'pickup' | 'return' | null
 
   // Rider details for step 2
   const [riderName, setRiderName] = useState('Rahul Verma');
-  const [riderPhone, setRiderPhone] = useState('+91 98765 43210');
   const [riderEmail, setRiderEmail] = useState('rahul.verma@example.com');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Filter country codes by search
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return COUNTRY_DIAL_CODES;
+    const q = countrySearch.toLowerCase().trim();
+    return COUNTRY_DIAL_CODES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.dialCode.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [countrySearch]);
+
+  // Combined full international phone number
+  const fullPhoneNumber = useMemo(() => {
+    return phoneNumber ? `${selectedCountryCode} ${phoneNumber}` : '';
+  }, [selectedCountryCode, phoneNumber]);
+
+  // Handle phone number input: restrict to numeric digits only, max 10 digits
+  const handlePhoneNumberChange = (val) => {
+    const numeric = val.replace(/[^0-9]/g, '').slice(0, 10);
+    setPhoneNumber(numeric);
+    if (phoneError) setPhoneError('');
+  };
 
   // Calculate rental duration in days
   const rentalDays = useMemo(() => {
@@ -106,6 +164,20 @@ export default function BookingScreen({
   const [bookingRefId] = useState(() => 'RDE-' + Math.floor(100000 + Math.random() * 900000));
 
   const handleProceedPayment = () => {
+    if (!selectedCountryCode) {
+      setPhoneError('Please select a country code.');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      setPhoneError('Please enter your mobile phone number.');
+      return;
+    }
+    if (phoneNumber.length < 10) {
+      setPhoneError('Phone number must be exactly 10 digits.');
+      return;
+    }
+    setPhoneError('');
+
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
@@ -128,6 +200,9 @@ export default function BookingScreen({
         rentalCharge: rentalTotal,
         deposit: securityDeposit,
         total: totalPayable,
+        riderName,
+        riderPhone: fullPhoneNumber,
+        riderEmail,
       });
     }
   };
@@ -154,7 +229,7 @@ export default function BookingScreen({
               )}
             </View>
             <Text style={[styles.stepText, step === 1 ? styles.stepTextActive : styles.stepTextInactive]}>
-              DATE SELECTION
+              {t('reservation.dateSelection')}
             </Text>
           </TouchableOpacity>
 
@@ -165,7 +240,7 @@ export default function BookingScreen({
               <Text style={step >= 2 ? styles.stepCircleNumActive : styles.stepCircleNumInactive}>2</Text>
             </View>
             <Text style={[styles.stepText, step >= 2 ? styles.stepTextActive : styles.stepTextInactive]}>
-              SUMMARY & PAYMENT
+              {t('reservation.summaryPayment')}
             </Text>
           </View>
         </View>
@@ -178,9 +253,9 @@ export default function BookingScreen({
               {step === 1 ? (
                 /* STEP 1: DATE & TIME SELECTION */
                 <View style={[styles.card, SHADOWS.card]}>
-                  <Text style={styles.cardHeading}>When are you riding?</Text>
+                  <Text style={styles.cardHeading}>{t('reservation.whenRiding')}</Text>
                   <Text style={styles.cardSubheading}>
-                    Select your pickup and return dates to see vehicle availability and exact pricing.
+                    {t('reservation.whenRidingSubtitle')}
                   </Text>
 
                   {/* 2x2 Form Inputs Grid */}
@@ -190,7 +265,7 @@ export default function BookingScreen({
                       <View style={styles.formFieldCol}>
                         <View style={styles.fieldLabelRow}>
                           <Calendar size={13} color="#94A3B8" />
-                          <Text style={styles.fieldLabelText}>PICKUP DATE</Text>
+                          <Text style={styles.fieldLabelText}>{t('reservation.pickupDate')}</Text>
                         </View>
                         <View style={styles.inputBoxWithIcon}>
                           <TextInput
@@ -207,7 +282,7 @@ export default function BookingScreen({
                       <View style={styles.formFieldCol}>
                         <View style={styles.fieldLabelRow}>
                           <Clock size={13} color="#94A3B8" />
-                          <Text style={styles.fieldLabelText}>PICKUP TIME</Text>
+                          <Text style={styles.fieldLabelText}>{t('reservation.pickupTime')}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.dropdownBox}
@@ -227,7 +302,7 @@ export default function BookingScreen({
                       <View style={styles.formFieldCol}>
                         <View style={styles.fieldLabelRow}>
                           <Calendar size={13} color="#94A3B8" />
-                          <Text style={styles.fieldLabelText}>RETURN DATE</Text>
+                          <Text style={styles.fieldLabelText}>{t('reservation.returnDate')}</Text>
                         </View>
                         <View style={styles.inputBoxWithIcon}>
                           <TextInput
@@ -244,7 +319,7 @@ export default function BookingScreen({
                       <View style={styles.formFieldCol}>
                         <View style={styles.fieldLabelRow}>
                           <Clock size={13} color="#94A3B8" />
-                          <Text style={styles.fieldLabelText}>RETURN TIME</Text>
+                          <Text style={styles.fieldLabelText}>{t('reservation.returnTime')}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.dropdownBox}
@@ -264,11 +339,7 @@ export default function BookingScreen({
                   <View style={styles.depositNoticeBox}>
                     <Info size={19} color="#00A3FF" style={{ flexShrink: 0, marginTop: 1 }} />
                     <Text style={styles.depositNoticeText}>
-                      A security deposit of{' '}
-                      <Text style={styles.depositBoldText}>
-                        ₹{securityDeposit.toLocaleString()}*
-                      </Text>{' '}
-                      will be collected at pickup. This is 100% fully refundable after your ride upon standard vehicle handover inspection.
+                      {t('reservation.depositNotice', { amount: securityDeposit.toLocaleString() })}
                     </Text>
                   </View>
 
@@ -278,21 +349,21 @@ export default function BookingScreen({
                     onPress={() => setStep(2)}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.continueBtnText}>Continue to Summary</Text>
+                    <Text style={styles.continueBtnText}>{t('reservation.continueSummary')}</Text>
                     <ArrowRight size={17} color="#050B14" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
               ) : (
                 /* STEP 2: RIDER & PAYMENT DETAILS */
                 <View style={[styles.card, SHADOWS.card]}>
-                  <Text style={styles.cardHeading}>Rider & Payment Details</Text>
+                  <Text style={styles.cardHeading}>{t('reservation.riderPaymentDetails')}</Text>
                   <Text style={styles.cardSubheading}>
-                    Enter rider contact information and select payment channel to finalize your booking.
+                    {t('reservation.riderSubtitle')}
                   </Text>
 
                   {/* Rider Contact Inputs */}
                   <View style={styles.step2InputGroup}>
-                    <Text style={styles.step2Label}>RIDER FULL NAME</Text>
+                    <Text style={styles.step2Label}>{t('reservation.riderFullName')}</Text>
                     <TextInput
                       style={styles.step2Input}
                       value={riderName}
@@ -302,21 +373,45 @@ export default function BookingScreen({
                     />
                   </View>
 
-                  <View style={styles.step2Row}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.step2Label}>PHONE NUMBER</Text>
-                      <TextInput
-                        style={styles.step2Input}
-                        value={riderPhone}
-                        onChangeText={setRiderPhone}
-                        placeholder="+91 98765 43210"
-                        placeholderTextColor="#475569"
-                        keyboardType="phone-pad"
-                      />
+                  <View style={[styles.step2Row, width < 640 && styles.step2RowCol]}>
+                    <View style={styles.phoneFieldColumn}>
+                      <Text style={styles.step2Label}>{t('reservation.phoneNumber')}</Text>
+                      <View style={styles.twoPartPhoneRow}>
+                        {/* 1. Country Code Dropdown (First Box) */}
+                        <TouchableOpacity
+                          style={styles.countryCodeBox}
+                          onPress={() => setIsCountryPickerOpen(true)}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel="Select Country Code"
+                        >
+                          <Text style={styles.countryCodeBoxText} numberOfLines={1}>
+                            {selectedCountryCode}
+                          </Text>
+                          <ChevronDown size={14} color="#64748B" />
+                        </TouchableOpacity>
+
+                        {/* 2. Phone Number Input (Second Box) */}
+                        <TextInput
+                          style={[
+                            styles.phoneNumberInput,
+                            phoneError ? styles.inputErrorBorder : null,
+                          ]}
+                          value={phoneNumber}
+                          onChangeText={handlePhoneNumberChange}
+                          placeholder="9876543210"
+                          placeholderTextColor="#475569"
+                          keyboardType="number-pad"
+                          maxLength={10}
+                        />
+                      </View>
+                      {phoneError ? (
+                        <Text style={styles.fieldErrorText}>{phoneError}</Text>
+                      ) : null}
                     </View>
 
-                    <View style={{ flex: 1.2 }}>
-                      <Text style={styles.step2Label}>EMAIL ADDRESS</Text>
+                    <View style={styles.emailFieldColumn}>
+                      <Text style={styles.step2Label}>{t('reservation.emailAddress')}</Text>
                       <TextInput
                         style={styles.step2Input}
                         value={riderEmail}
@@ -331,7 +426,7 @@ export default function BookingScreen({
 
                   {/* Payment Methods */}
                   <View style={{ marginTop: 20 }}>
-                    <Text style={styles.step2Label}>PAYMENT METHOD</Text>
+                    <Text style={styles.step2Label}>{t('reservation.paymentMethod')}</Text>
                     <View style={styles.paymentMethodsRow}>
                       <TouchableOpacity
                         style={[
@@ -343,7 +438,7 @@ export default function BookingScreen({
                       >
                         <Smartphone size={18} color={paymentMethod === 'upi' ? '#00A3FF' : '#94A3B8'} />
                         <Text style={[styles.paymentMethodText, paymentMethod === 'upi' && styles.paymentMethodTextActive]}>
-                          UPI / QR
+                          {t('reservation.payUpi')}
                         </Text>
                       </TouchableOpacity>
 
@@ -357,7 +452,7 @@ export default function BookingScreen({
                       >
                         <CreditCard size={18} color={paymentMethod === 'card' ? '#00A3FF' : '#94A3B8'} />
                         <Text style={[styles.paymentMethodText, paymentMethod === 'card' && styles.paymentMethodTextActive]}>
-                          Credit / Debit
+                          {t('reservation.payCard')}
                         </Text>
                       </TouchableOpacity>
 
@@ -371,7 +466,7 @@ export default function BookingScreen({
                       >
                         <ShieldCheck size={18} color={paymentMethod === 'pickup' ? '#00A3FF' : '#94A3B8'} />
                         <Text style={[styles.paymentMethodText, paymentMethod === 'pickup' && styles.paymentMethodTextActive]}>
-                          Pay at Pickup
+                          {t('reservation.payPickup')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -385,7 +480,7 @@ export default function BookingScreen({
                       activeOpacity={0.8}
                     >
                       <ArrowLeft size={16} color="#94A3B8" />
-                      <Text style={styles.backBtnText}>Back</Text>
+                      <Text style={styles.backBtnText}>{t('reservation.back')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -399,7 +494,7 @@ export default function BookingScreen({
                       ) : (
                         <>
                           <Text style={styles.confirmBtnText}>
-                            Confirm & Reserve (₹{totalPayable.toLocaleString()})
+                            {t('reservation.confirmReserve')} (₹{totalPayable.toLocaleString()})
                           </Text>
                           <ArrowRight size={17} color="#050B14" strokeWidth={2.5} />
                         </>
@@ -431,22 +526,22 @@ export default function BookingScreen({
                 {/* Price Breakdown Line Items */}
                 <View style={styles.priceBreakdownWrap}>
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Rental Fee</Text>
+                    <Text style={styles.priceLabel}>{t('reservation.rentalFee')}</Text>
                     <Text style={styles.priceValue}>
-                      ₹{selectedBike.pricePerDay.toLocaleString()} / day
+                      ₹{selectedBike.pricePerDay.toLocaleString()} {t('bikeCard.perDay')}
                     </Text>
                   </View>
 
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Security Deposit</Text>
+                    <Text style={styles.priceLabel}>{t('reservation.securityDeposit')}</Text>
                     <Text style={[styles.priceValue, styles.priceValueCyan]}>
                       ₹{securityDeposit.toLocaleString()}*
                     </Text>
                   </View>
 
                   <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Estimated Days</Text>
-                    <Text style={styles.priceValue}>{rentalDays} Days</Text>
+                    <Text style={styles.priceLabel}>{t('reservation.estimatedDays')}</Text>
+                    <Text style={styles.priceValue}>{rentalDays} {t('reservation.days')}</Text>
                   </View>
 
                   {step === 2 && (
@@ -464,7 +559,7 @@ export default function BookingScreen({
                   activeOpacity={0.8}
                 >
                   <Text style={styles.changeSelectionText}>
-                    Need a different bike? Change Selection
+                    {t('reservation.changeSelection')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -493,6 +588,12 @@ export default function BookingScreen({
                 <Text style={styles.successSummaryLabel}>Motorcycle</Text>
                 <Text style={styles.successSummaryValue}>{selectedBike.name}</Text>
               </View>
+              {fullPhoneNumber ? (
+                <View style={styles.successSummaryRow}>
+                  <Text style={styles.successSummaryLabel}>Rider Contact</Text>
+                  <Text style={styles.successSummaryValue}>{fullPhoneNumber}</Text>
+                </View>
+              ) : null}
               <View style={styles.successSummaryRow}>
                 <Text style={styles.successSummaryLabel}>Pickup</Text>
                 <Text style={styles.successSummaryValue}>{pickupDate} @ {pickupTime}</Text>
@@ -513,7 +614,7 @@ export default function BookingScreen({
             <View style={styles.successActions}>
               <TouchableOpacity
                 style={styles.whatsAppConfirmBtn}
-                onPress={() => onOpenWhatsApp && onOpenWhatsApp(selectedBike)}
+                onPress={() => onOpenWhatsApp && onOpenWhatsApp(selectedBike, { phone: fullPhoneNumber })}
                 activeOpacity={0.85}
               >
                 <MessageCircle size={18} color="#050B14" />
@@ -599,6 +700,92 @@ export default function BookingScreen({
                   </TouchableOpacity>
                 );
               })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ================= COUNTRY CODE PICKER MODAL ================= */}
+      <Modal
+        visible={isCountryPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setIsCountryPickerOpen(false);
+          setCountrySearch('');
+        }}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setIsCountryPickerOpen(false);
+            setCountrySearch('');
+          }}
+        >
+          <View style={[styles.modalContent, { width: 380, maxHeight: 460 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Country Code</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsCountryPickerOpen(false);
+                  setCountrySearch('');
+                }}
+              >
+                <X size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Input Box */}
+            <View style={styles.countrySearchWrap}>
+              <TextInput
+                style={styles.countrySearchInput}
+                value={countrySearch}
+                onChangeText={setCountrySearch}
+                placeholder="Search country or code..."
+                placeholderTextColor="#64748B"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <ScrollView style={{ maxHeight: 290 }} keyboardShouldPersistTaps="handled">
+              {filteredCountries.map((c) => {
+                const isSelected = selectedCountryCode === c.dialCode;
+                return (
+                  <TouchableOpacity
+                    key={`${c.code}-${c.dialCode}`}
+                    style={[
+                      styles.timeOptionItem,
+                      isSelected && styles.timeOptionItemActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedCountryCode(c.dialCode);
+                      setSelectedCountry(c);
+                      if (phoneError) setPhoneError('');
+                      setIsCountryPickerOpen(false);
+                      setCountrySearch('');
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Text style={{ fontSize: 16 }}>{c.flag}</Text>
+                      <Text
+                        style={[
+                          styles.timeOptionText,
+                          isSelected && styles.timeOptionTextActive,
+                        ]}
+                      >
+                        {c.name} ({c.dialCode})
+                      </Text>
+                    </View>
+                    {isSelected && <Check size={16} color="#00A3FF" />}
+                  </TouchableOpacity>
+                );
+              })}
+              {filteredCountries.length === 0 && (
+                <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                  <Text style={{ color: '#64748B', fontSize: 13 }}>No countries found</Text>
+                </View>
+              )}
             </ScrollView>
           </View>
         </TouchableOpacity>
@@ -905,6 +1092,73 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 14,
   },
+  step2RowCol: {
+    flexDirection: 'column',
+    gap: 14,
+  },
+  phoneFieldColumn: {
+    flex: 1.1,
+  },
+  emailFieldColumn: {
+    flex: 1,
+  },
+  twoPartPhoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  countryCodeBox: {
+    width: 92,
+    height: 48,
+    backgroundColor: '#070D18',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  countryCodeBoxText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  phoneNumberInput: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#070D18',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  inputErrorBorder: {
+    borderColor: '#EF4444',
+  },
+  fieldErrorText: {
+    color: '#EF4444',
+    fontSize: 11.5,
+    marginTop: 5,
+    fontWeight: '500',
+  },
+  countrySearchWrap: {
+    backgroundColor: '#070D18',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    marginBottom: 12,
+  },
+  countrySearchInput: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    padding: 0,
+  },
   step2Label: {
     fontSize: 11,
     fontWeight: '700',
@@ -913,6 +1167,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   step2Input: {
+    height: 48,
     backgroundColor: '#070D18',
     borderWidth: 1,
     borderColor: '#1E293B',

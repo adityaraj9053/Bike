@@ -27,6 +27,8 @@ import { BIKES_DATA, CATEGORIES_DATA, FAQS_DATA, TESTIMONIALS_DATA } from '../da
 import { IMAGES } from '../assets/images';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
 import BikeCard from '../components/BikeCard';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -36,7 +38,10 @@ export default function HomeScreen({
   onStartBooking,
   onOpenWhatsApp,
   onOpenBookModal,
+  user,
+  onOpenAuth,
 }) {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const carouselScrollRef = useRef(null);
@@ -76,17 +81,23 @@ export default function HomeScreen({
         <View style={styles.heroOverlay} />
 
         <View style={styles.heroContent}>
-          <View style={styles.heroTagBadge}>
-            <Text style={styles.heroTagText}>THEROADEAGLE.COM</Text>
-          </View>
+          {/* <View style={styles.heroBadgeRow}>
+            <View style={styles.heroTagBadge}>
+              <Text style={styles.heroTagText}>THEROADEAGLE.COM</Text>
+            </View>
+            <LanguageSwitcher compact />
+          </View> */}
+
+          <Text style={styles.heroWelcomeBadge}>
+            {t('welcome')}
+          </Text>
 
           <Text style={styles.heroTitle}>
-            Your Ride, Your Route,{'\n'}
-            <Text style={styles.heroTitleCyan}>Your Freedom.</Text>
+            {t('greeting')}
           </Text>
 
           <Text style={styles.heroSubtitle}>
-            Discover the city on two wheels. Find the perfect machine for your journey, from agile urban scooters to highway cruisers and superbikes.
+            {t('heroSubtitle')}
           </Text>
 
           <View style={styles.heroButtons}>
@@ -96,17 +107,17 @@ export default function HomeScreen({
               activeOpacity={0.8}
             >
               <Bike size={18} color="#050B14" />
-              <Text style={styles.btnPrimaryText}>Explore Bikes</Text>
+              <Text style={styles.btnPrimaryText}>{t('exploreBikes') || 'Explore Bikes'}</Text>
             </TouchableOpacity>
-
+{/* 
             <TouchableOpacity
               style={styles.btnWhatsAppDark}
               onPress={onOpenWhatsApp}
               activeOpacity={0.8}
             >
               <MessageCircle size={18} color={COLORS.accentCyan} />
-              <Text style={styles.btnWhatsAppDarkText}>WhatsApp Enquiry</Text>
-            </TouchableOpacity>
+              <Text style={styles.btnWhatsAppDarkText}>{t('whatsappEnquiry') || 'WhatsApp Enquiry'}</Text>
+            </TouchableOpacity> */}
           </View>
         </View>
       </View>
@@ -122,28 +133,28 @@ export default function HomeScreen({
             <View style={styles.featureIcon}>
               <Bike size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.featureTitle}>Multiple Bike Options</Text>
+            <Text style={styles.featureTitle}>{t('multipleBikeOptions')}</Text>
           </View>
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
               <Tag size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.featureTitle}>Transparent Pricing</Text>
+            <Text style={styles.featureTitle}>{t('transparentPricing')}</Text>
           </View>
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
               <Headphones size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.featureTitle}>Customer Assistance</Text>
+            <Text style={styles.featureTitle}>{t('customerAssistance')}</Text>
           </View>
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
               <CalendarCheck size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.featureTitle}>Easy Enquiries</Text>
+            <Text style={styles.featureTitle}>{t('easyEnquiries')}</Text>
           </View>
         </ScrollView>
       </View>
@@ -151,19 +162,19 @@ export default function HomeScreen({
       {/* ================= PHILOSOPHY STATEMENT ================= */}
       <View style={styles.philosophySection}>
         <Text style={styles.philosophyQuote}>
-          "Renting a motorcycle shouldn't feel like a leap of faith. We exist to provide transparent pricing, factory-maintained machines, and complete peace of mind."
+          {t('philosophyQuote')}
         </Text>
-        <Text style={styles.philosophyAuthor}>— The Road Eagle Guarantee</Text>
+        <Text style={styles.philosophyAuthor}>{t('philosophyAuthor')}</Text>
       </View>
 
       {/* ================= CURATED FLEET SECTION ================= */}
       <View style={styles.fleetSection}>
         <View style={styles.fleetHeaderRow}>
           <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={styles.sectionPretitle}>CURATED LINEUP</Text>
-            <Text style={styles.sectionTitle}>Featured Motorbikes</Text>
+            <Text style={styles.sectionPretitle}>{t('curatedLineup')}</Text>
+            <Text style={styles.sectionTitle}>{t('featuredMotorbikes')}</Text>
             <Text style={styles.sectionSubtitle}>
-              Hand-picked machines ready for immediate adventure and daily convenience.
+              {t('featuredSubtitle')}
             </Text>
           </View>
 
@@ -208,7 +219,7 @@ export default function HomeScreen({
                 activeOpacity={0.7}
               >
                 <Text style={[styles.categoryPillText, isActive && styles.categoryPillTextActive]}>
-                  {cat.label}
+                  {t(`categories.${cat.id}`) || cat.label}
                 </Text>
               </TouchableOpacity>
             );
@@ -235,13 +246,15 @@ export default function HomeScreen({
                 }}
                 onStartBooking={onStartBooking}
                 onOpenBookModal={onOpenBookModal}
+                user={user}
+                onOpenAuth={onOpenAuth}
                 style={styles.carouselCard}
               />
             ))}
 
             {filteredBikes.length === 0 && (
               <View style={styles.carouselEmpty}>
-                <Text style={styles.carouselEmptyText}>No motorbikes found in this category.</Text>
+                <Text style={styles.carouselEmptyText}>{t('noBikesFound')}</Text>
               </View>
             )}
           </ScrollView>
@@ -253,7 +266,7 @@ export default function HomeScreen({
           onPress={() => navigation.navigate('Motorbikes')}
           activeOpacity={0.8}
         >
-          <Text style={styles.viewAllBtnText}>View Complete 50+ Fleet ({filteredBikes.length} available)</Text>
+          <Text style={styles.viewAllBtnText}>{t('viewCompleteFleet')} ({filteredBikes.length} {t('available')})</Text>
           <ArrowRight size={16} color={COLORS.accentCyan} />
         </TouchableOpacity>
       </View>
@@ -261,8 +274,8 @@ export default function HomeScreen({
       {/* ================= WHY CHOOSE US ================= */}
       <View style={styles.whySection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionPretitle}>WHY THE ROAD EAGLE</Text>
-          <Text style={styles.sectionTitle}>Built for Serious Riders</Text>
+          <Text style={styles.sectionPretitle}>{t('whyRoadEagle')}</Text>
+          <Text style={styles.sectionTitle}>{t('builtForSeriousRiders')}</Text>
         </View>
 
         <View style={styles.whyGrid}>
@@ -270,9 +283,9 @@ export default function HomeScreen({
             <View style={styles.whyIconCircle}>
               <ShieldCheck size={24} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.whyCardTitle}>24-Point Inspection</Text>
+            <Text style={styles.whyCardTitle}>{t('inspection24Title')}</Text>
             <Text style={styles.whyCardDesc}>
-              Every machine undergoes meticulous fluid, brake, and tyre checks before handover.
+              {t('inspection24Desc')}
             </Text>
           </View>
 
@@ -280,9 +293,9 @@ export default function HomeScreen({
             <View style={styles.whyIconCircle}>
               <Tag size={24} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.whyCardTitle}>Zero Hidden Fees</Text>
+            <Text style={styles.whyCardTitle}>{t('zeroFeesTitle')}</Text>
             <Text style={styles.whyCardDesc}>
-              Clear daily rates with 100% refundable security deposit returned within 24-48 hours.
+              {t('zeroFeesDesc')}
             </Text>
           </View>
 
@@ -290,9 +303,9 @@ export default function HomeScreen({
             <View style={styles.whyIconCircle}>
               <Headphones size={24} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.whyCardTitle}>24/7 Roadside Assistance</Text>
+            <Text style={styles.whyCardTitle}>{t('roadsideTitle')}</Text>
             <Text style={styles.whyCardDesc}>
-              Flat tyre? Emergency support? Our rapid breakdown van is always one phone call away.
+              {t('roadsideDesc')}
             </Text>
           </View>
 
@@ -300,9 +313,9 @@ export default function HomeScreen({
             <View style={styles.whyIconCircle}>
               <Award size={24} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.whyCardTitle}>Complimentary Gear</Text>
+            <Text style={styles.whyCardTitle}>{t('gearTitle')}</Text>
             <Text style={styles.whyCardDesc}>
-              Sanitized ISI/DOT certified helmet and phone mounts provided with every booking.
+              {t('gearDesc')}
             </Text>
           </View>
         </View>
@@ -311,8 +324,8 @@ export default function HomeScreen({
       {/* ================= CUSTOMER REVIEWS ================= */}
       <View style={styles.reviewsSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionPretitle}>VERIFIED FEEDBACK</Text>
-          <Text style={styles.sectionTitle}>Loved by Riders</Text>
+          <Text style={styles.sectionPretitle}>{t('verifiedFeedback')}</Text>
+          <Text style={styles.sectionTitle}>{t('lovedByRiders')}</Text>
         </View>
 
         <ScrollView
@@ -345,13 +358,15 @@ export default function HomeScreen({
       {/* ================= FAQS ACCORDION ================= */}
       <View style={styles.faqSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionPretitle}>COMMON QUERIES</Text>
-          <Text style={styles.sectionTitle}>Frequently Asked</Text>
+          <Text style={styles.sectionPretitle}>{t('commonQueries')}</Text>
+          <Text style={styles.sectionTitle}>{t('frequentlyAsked')}</Text>
         </View>
 
         <View style={styles.faqList}>
           {FAQS_DATA.map((faq, index) => {
             const isOpen = openFaqIndex === index;
+            const qKey = `faqs.q${index + 1}`;
+            const aKey = `faqs.a${index + 1}`;
             return (
               <TouchableOpacity
                 key={index}
@@ -361,7 +376,7 @@ export default function HomeScreen({
               >
                 <View style={styles.faqHeader}>
                   <Text style={[styles.faqQuestion, isOpen && styles.faqQuestionActive]}>
-                    {faq.question}
+                    {t(qKey) !== qKey ? t(qKey) : faq.question}
                   </Text>
                   {isOpen ? (
                     <Minus size={18} color={COLORS.accentCyan} />
@@ -371,7 +386,7 @@ export default function HomeScreen({
                 </View>
 
                 {isOpen && (
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                  <Text style={styles.faqAnswer}>{t(aKey) !== aKey ? t(aKey) : faq.answer}</Text>
                 )}
               </TouchableOpacity>
             );
@@ -381,9 +396,9 @@ export default function HomeScreen({
 
       {/* ================= BOTTOM CTA BANNER ================= */}
       <View style={styles.ctaBanner}>
-        <Text style={styles.ctaBannerTitle}>Ready to Hit the Open Road?</Text>
+        <Text style={styles.ctaBannerTitle}>{t('readyToHitOpenRoad')}</Text>
         <Text style={styles.ctaBannerSubtitle}>
-          Reserve your dream machine today or chat with our team on WhatsApp for instant booking.
+          {t('readySubtitle')}
         </Text>
         <View style={styles.ctaBannerBtns}>
           <TouchableOpacity
@@ -391,7 +406,7 @@ export default function HomeScreen({
             onPress={() => navigation.navigate('Motorbikes')}
             activeOpacity={0.8}
           >
-            <Text style={styles.ctaPrimaryBtnText}>Browse Entire Fleet</Text>
+            <Text style={styles.ctaPrimaryBtnText}>{t('browseEntireFleet')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.ctaWhatsAppBtn}
@@ -399,7 +414,7 @@ export default function HomeScreen({
             activeOpacity={0.8}
           >
             <MessageCircle size={18} color="#050B14" />
-            <Text style={styles.ctaWhatsAppBtnText}>WhatsApp Concierge</Text>
+            <Text style={styles.ctaWhatsAppBtnText}>{t('whatsappConcierge')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -434,6 +449,21 @@ const styles = StyleSheet.create({
   heroContent: {
     zIndex: 2,
   },
+  heroBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    gap: 12,
+  },
+  heroWelcomeBadge: {
+    color: COLORS.accentCyan,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
   heroTagBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(0, 163, 255, 0.15)',
@@ -442,7 +472,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: RADIUS.full,
-    marginBottom: 16,
+    marginBottom: 0,
   },
   heroTagText: {
     color: COLORS.accentCyan,

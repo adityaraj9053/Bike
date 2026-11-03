@@ -20,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
@@ -29,10 +30,40 @@ export default function BikeDetailsScreen({
   onStartBooking,
   onOpenWhatsApp,
   onOpenBookModal,
+  user,
+  onOpenAuth,
 }) {
+  const { t } = useTranslation();
   const bike = route?.params?.bike || BIKES_DATA[0];
   const gallery = bike.gallerySources || [bike.imageSource];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const getBadgeTranslation = (badge) => {
+    if (!badge) return '';
+    const map = {
+      'PREMIUM CHOICE': t('bikeCard.premiumChoice'),
+      'POPULAR': t('bikeCard.popular'),
+      'PREMIUM': t('bikeCard.premium'),
+      'SPORT RACING': t('bikeCard.sportRacing'),
+      'CLASSIC VINTAGE': t('bikeCard.classicVintage'),
+      'ECO FRIENDLY': t('bikeCard.ecoFriendly'),
+    };
+    return map[badge] || badge;
+  };
+
+  const handleBookPress = () => {
+    if (!user) {
+      if (onOpenAuth) {
+        onOpenAuth();
+      }
+      return;
+    }
+    if (onStartBooking) {
+      onStartBooking(bike);
+    } else if (onOpenBookModal) {
+      onOpenBookModal(bike);
+    }
+  };
 
   const similarBikes = BIKES_DATA.filter((b) => b.id !== bike.id).slice(0, 3);
 
@@ -54,7 +85,9 @@ export default function BikeDetailsScreen({
           {/* Badges on image */}
           <View style={styles.imageBadges}>
             <View style={styles.badgePrimary}>
-              <Text style={styles.badgePrimaryText}>{bike.badge || 'PREMIUM'}</Text>
+              <Text style={styles.badgePrimaryText}>
+                {getBadgeTranslation(bike.badge) || t('bikeCard.premium')}
+              </Text>
             </View>
             <View
               style={[
@@ -68,7 +101,7 @@ export default function BikeDetailsScreen({
               ]}
             >
               <Text style={styles.statusBadgeText}>
-                {bike.statusBadge || 'AVAILABLE'}
+                {bike.statusBadge === 'LIMITED' ? t('bikeCard.limited') : t('bikeCard.available')}
               </Text>
             </View>
           </View>
@@ -110,7 +143,7 @@ export default function BikeDetailsScreen({
               ))}
             </View>
             <Text style={styles.ratingScore}>{bike.rating}</Text>
-            <Text style={styles.reviewCount}>({bike.reviewsCount} verified reviews)</Text>
+            <Text style={styles.reviewCount}>({bike.reviewsCount} {t('bikeDetails.verifiedReviews')})</Text>
           </View>
 
           {/* Price Card */}
@@ -118,20 +151,20 @@ export default function BikeDetailsScreen({
             <View style={styles.priceHeader}>
               <View>
                 <View style={styles.priceAmountRow}>
-                  <Text style={styles.fromLabel}>from</Text>
+                  <Text style={styles.fromLabel}>{t('bikeCard.from')}</Text>
                   <Text style={styles.priceNumber}>
                     ${Math.round(bike.pricePerDay / 50)}
                   </Text>
-                  <Text style={styles.perDayLabel}>/ day</Text>
+                  <Text style={styles.perDayLabel}>{t('bikeCard.perDay')}</Text>
                 </View>
                 <Text style={styles.inrSubtitle}>
-                  ₹{bike.pricePerDay.toLocaleString()} INR / day
+                  ₹{bike.pricePerDay.toLocaleString()} INR {t('bikeCard.perDay')}
                 </Text>
               </View>
 
               <View style={styles.depositPill}>
                 <Text style={styles.depositPillText}>
-                  Refundable Deposit: ₹{bike.deposit.toLocaleString()}*
+                  {t('bikeDetails.refundableDeposit')}: ₹{bike.deposit.toLocaleString()}*
                 </Text>
               </View>
             </View>
@@ -139,7 +172,7 @@ export default function BikeDetailsScreen({
             <View style={styles.availabilityBanner}>
               <CheckCircle2 size={16} color={COLORS.statusAvailable} />
               <Text style={styles.availabilityText}>
-                {bike.availability || 'Available for immediate pickup'}
+                {t('bikeDetails.availableImmediate')}
               </Text>
             </View>
           </View>
@@ -148,16 +181,10 @@ export default function BikeDetailsScreen({
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={[styles.bookBtn, SHADOWS.glowRed]}
-              onPress={() => {
-                if (onStartBooking) {
-                  onStartBooking(bike);
-                } else if (onOpenBookModal) {
-                  onOpenBookModal(bike);
-                }
-              }}
+              onPress={handleBookPress}
               activeOpacity={0.8}
             >
-              <Text style={styles.bookBtnText}>Book This Bike</Text>
+              <Text style={styles.bookBtnText}>{t('bikeDetails.bookThisBike')}</Text>
               <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
             </TouchableOpacity>
 
@@ -167,46 +194,48 @@ export default function BikeDetailsScreen({
               activeOpacity={0.8}
             >
               <MessageCircle size={18} color="#050B14" />
-              <Text style={styles.whatsAppBtnText}>WhatsApp</Text>
+              <Text style={styles.whatsAppBtnText}>{t('bikeDetails.whatsApp')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* ================= SPECS GRID ================= */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Technical Specifications</Text>
+          <Text style={styles.sectionTitle}>{t('bikeDetails.technicalSpecs')}</Text>
 
           <View style={styles.specsGrid}>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Displacement</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.displacement')}</Text>
               <Text style={styles.specVal}>{bike.specs?.displacement || '350 CC'}</Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Max Power</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.maxPower')}</Text>
               <Text style={styles.specVal}>{bike.specs?.power || '20.2 BHP'}</Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Transmission</Text>
-              <Text style={styles.specVal}>{bike.specs?.transmission || 'Manual'}</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.transmission')}</Text>
+              <Text style={styles.specVal}>
+                {bike.specs?.transmission?.includes('Manual') ? t('bikeCard.manual') : t('bikeCard.auto')}
+              </Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Fuel System</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.fuelSystem')}</Text>
               <Text style={styles.specVal}>{bike.specs?.fuelSystem || 'EFI'}</Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Tank Capacity</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.tankCapacity')}</Text>
               <Text style={styles.specVal}>{bike.specs?.tankCapacity || '15 L'}</Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Mileage</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.mileage')}</Text>
               <Text style={styles.specVal}>{bike.specs?.mileage || '40 kmpl'}</Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Braking</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.braking')}</Text>
               <Text style={styles.specVal}>{bike.specs?.braking || 'ABS'}</Text>
             </View>
             <View style={styles.specBox}>
-              <Text style={styles.specKey}>Kerb Weight</Text>
+              <Text style={styles.specKey}>{t('bikeDetails.kerbWeight')}</Text>
               <Text style={styles.specVal}>{bike.specs?.weight || '190 kg'}</Text>
             </View>
           </View>
@@ -214,7 +243,7 @@ export default function BikeDetailsScreen({
 
         {/* ================= FEATURES LIST ================= */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Key Features & Highlights</Text>
+          <Text style={styles.sectionTitle}>{t('bikeDetails.keyFeatures')}</Text>
           <View style={styles.featuresList}>
             {(bike.features || []).map((feat, idx) => (
               <View key={idx} style={styles.featureRow}>
@@ -227,13 +256,13 @@ export default function BikeDetailsScreen({
 
         {/* ================= RENTAL GUIDELINES ================= */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rental Terms & Requirements</Text>
+          <Text style={styles.sectionTitle}>{t('bikeDetails.rentalTerms')}</Text>
 
           <View style={styles.guidelinesList}>
             <View style={styles.guidelineCard}>
               <View style={styles.guidelineHeader}>
                 <Clock size={16} color={COLORS.accentCyan} />
-                <Text style={styles.guidelineTitle}>Rental Duration</Text>
+                <Text style={styles.guidelineTitle}>{t('bikeDetails.rentalDuration')}</Text>
               </View>
               <Text style={styles.guidelineDesc}>{bike.guidelines?.duration}</Text>
             </View>
@@ -241,7 +270,7 @@ export default function BikeDetailsScreen({
             <View style={styles.guidelineCard}>
               <View style={styles.guidelineHeader}>
                 <FileText size={16} color={COLORS.accentCyan} />
-                <Text style={styles.guidelineTitle}>Required Documents</Text>
+                <Text style={styles.guidelineTitle}>{t('bikeDetails.requiredDocuments')}</Text>
               </View>
               <Text style={styles.guidelineDesc}>{bike.guidelines?.documents}</Text>
             </View>
@@ -249,7 +278,7 @@ export default function BikeDetailsScreen({
             <View style={styles.guidelineCard}>
               <View style={styles.guidelineHeader}>
                 <ShieldCheck size={16} color={COLORS.accentCyan} />
-                <Text style={styles.guidelineTitle}>Security Deposit Policy</Text>
+                <Text style={styles.guidelineTitle}>{t('bikeDetails.securityDepositPolicy')}</Text>
               </View>
               <Text style={styles.guidelineDesc}>{bike.guidelines?.deposit}</Text>
             </View>
@@ -258,7 +287,7 @@ export default function BikeDetailsScreen({
 
         {/* ================= SIMILAR BIKES ================= */}
         <View style={[styles.section, { marginBottom: 30 }]}>
-          <Text style={styles.sectionTitle}>You Might Also Like</Text>
+          <Text style={styles.sectionTitle}>{t('bikeDetails.youMightAlsoLike')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -277,7 +306,7 @@ export default function BikeDetailsScreen({
                     {sb.name}
                   </Text>
                   <Text style={styles.similarPrice}>
-                    ₹{sb.pricePerDay.toLocaleString()}/day
+                    ₹{sb.pricePerDay.toLocaleString()}{t('bikeCard.perDay')}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -289,25 +318,19 @@ export default function BikeDetailsScreen({
       {/* ================= STICKY BOTTOM BAR ================= */}
       <View style={styles.stickyBottomBar}>
         <View>
-          <Text style={styles.stickyPriceLabel}>Daily Rental</Text>
+          <Text style={styles.stickyPriceLabel}>{t('bikeDetails.dailyRental')}</Text>
           <Text style={styles.stickyPriceValue}>
             ₹{bike.pricePerDay.toLocaleString()}
-            <Text style={{ fontSize: 12, color: COLORS.textMuted }}> /day</Text>
+            <Text style={{ fontSize: 12, color: COLORS.textMuted }}> {t('bikeCard.perDay')}</Text>
           </Text>
         </View>
 
         <TouchableOpacity
           style={[styles.stickyBookBtn, SHADOWS.glowRed]}
-          onPress={() => {
-            if (onStartBooking) {
-              onStartBooking(bike);
-            } else if (onOpenBookModal) {
-              onOpenBookModal(bike);
-            }
-          }}
+          onPress={handleBookPress}
           activeOpacity={0.8}
         >
-          <Text style={styles.stickyBookBtnText}>Book this bike</Text>
+          <Text style={styles.stickyBookBtnText}>{t('bikeDetails.bookThisBike')}</Text>
           <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>

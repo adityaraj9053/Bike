@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Bike, 
   Tag, 
@@ -26,6 +27,7 @@ export default function HomePage({
   onOpenWhatsApp,
   onShowToast
 }) {
+  const { t } = useTranslation();
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const [openDropdownBikeId, setOpenDropdownBikeId] = useState(null);
 
@@ -44,10 +46,9 @@ export default function HomePage({
       >
         <div className="hero-overlay"></div>
         <div className="hero-content">
-          <p className="hero-tag">THEROADEAGLE.COM</p>
+          <p className="hero-tag">{t('welcome') || 'THEROADEAGLE.COM'}</p>
           <h1 className="hero-title">
-            Your Ride, Your Route,<br />
-            <span className="text-gradient">Your Freedom.</span>
+            {t('greeting')}
           </h1>
           <p className="hero-subtitle">
             Discover [City Name] on two wheels. Find the perfect bike for your journey, from agile urban scooters to high-performance cruisers and superbikes.

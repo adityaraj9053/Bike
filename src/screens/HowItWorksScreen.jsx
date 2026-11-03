@@ -18,8 +18,10 @@ import {
 } from 'lucide-react-native';
 import { FAQS_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 export default function HowItWorksScreen({ navigation }) {
+  const { t } = useTranslation();
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
   const toggleFaq = (idx) => {
@@ -29,23 +31,23 @@ export default function HowItWorksScreen({ navigation }) {
   const steps = [
     {
       num: '01',
-      title: 'Explore Our Fleet',
-      desc: 'Browse our diverse lineup of scooters, daily commuters, highway cruisers, and track-ready superbikes.',
+      title: t('howItWorks.step1Title'),
+      desc: t('howItWorks.step1Desc'),
     },
     {
       num: '02',
-      title: 'Select Your Machine',
-      desc: 'Review detailed factory specifications, real photographs, verified rider reviews, and transparent daily rates.',
+      title: t('howItWorks.step2Title'),
+      desc: t('howItWorks.step2Desc'),
     },
     {
       num: '03',
-      title: 'Choose Dates & Enquire',
-      desc: 'Enquire directly via WhatsApp or book online. Select your preferred pickup dates, time, and hub location.',
+      title: t('howItWorks.step3Title'),
+      desc: t('howItWorks.step3Desc'),
     },
     {
       num: '04',
-      title: 'Confirm & Ride',
-      desc: 'Present your driving licence and ID at our pickup hub, perform a 2-minute vehicle inspection, and hit the open road!',
+      title: t('howItWorks.step4Title'),
+      desc: t('howItWorks.step4Desc'),
     },
   ];
 
@@ -57,13 +59,13 @@ export default function HowItWorksScreen({ navigation }) {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.pretitle}>HOW IT WORKS</Text>
+        <Text style={styles.pretitle}>{t('howItWorks.pretitle')}</Text>
         <Text style={styles.title}>
-          Getting Your Ride Is{'\n'}
-          <Text style={{ color: COLORS.accentCyan }}>Easier Than You Think.</Text>
+          {t('howItWorks.title1')}{'\n'}
+          <Text style={{ color: COLORS.accentCyan }}>{t('howItWorks.title2')}</Text>
         </Text>
         <Text style={styles.subtitle}>
-          Follow four simple steps to find, book, and ride your preferred motorcycle with zero friction.
+          {t('howItWorks.subtitle')}
         </Text>
       </View>
 
@@ -82,9 +84,9 @@ export default function HowItWorksScreen({ navigation }) {
 
       {/* Guidelines Section */}
       <View style={styles.guidelinesSection}>
-        <Text style={styles.sectionTitle}>Rental Guidelines & Details</Text>
+        <Text style={styles.sectionTitle}>{t('howItWorks.guidelinesTitle')}</Text>
         <Text style={styles.sectionSubtitle}>
-          Everything you need to know for a compliant and seamless ride.
+          {t('howItWorks.guidelinesSubtitle')}
         </Text>
 
         <View style={styles.guidelinesGrid}>
@@ -92,11 +94,11 @@ export default function HowItWorksScreen({ navigation }) {
             <View style={styles.guidelineIcon}>
               <FileText size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.guidelineHeading}>Mandatory Documents</Text>
+            <Text style={styles.guidelineHeading}>{t('howItWorks.docsTitle')}</Text>
             <Text style={styles.guidelineBody}>
-              • Valid original Driving Licence (Two-Wheeler / A-Category).{'\n'}
-              • Government Photo ID (Aadhaar, Passport, or Voter ID).{'\n'}
-              • 2 Passport-size photographs or instant biometric selfie.
+              {t('howItWorks.docsLine1')}{'\n'}
+              {t('howItWorks.docsLine2')}{'\n'}
+              {t('howItWorks.docsLine3')}
             </Text>
           </View>
 
@@ -104,10 +106,10 @@ export default function HowItWorksScreen({ navigation }) {
             <View style={styles.guidelineIcon}>
               <ShieldCheck size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.guidelineHeading}>Security Deposit</Text>
+            <Text style={styles.guidelineHeading}>{t('howItWorks.depositTitle')}</Text>
             <Text style={styles.guidelineBody}>
-              • Refundable deposit of ₹1,500 to ₹5,000 depending on vehicle class.{'\n'}
-              • 100% refunded within 24-48 hours after vehicle return inspection.
+              {t('howItWorks.depositLine1')}{'\n'}
+              {t('howItWorks.depositLine2')}
             </Text>
           </View>
 
@@ -115,10 +117,10 @@ export default function HowItWorksScreen({ navigation }) {
             <View style={styles.guidelineIcon}>
               <Fuel size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.guidelineHeading}>Fuel & Mileage Policy</Text>
+            <Text style={styles.guidelineHeading}>{t('howItWorks.fuelTitle')}</Text>
             <Text style={styles.guidelineBody}>
-              • Same-to-same fuel policy. Match the gauge level at drop-off.{'\n'}
-              • Unlimited city kilometers. Interstate touring requires intimation.
+              {t('howItWorks.fuelLine1')}{'\n'}
+              {t('howItWorks.fuelLine2')}
             </Text>
           </View>
 
@@ -126,10 +128,10 @@ export default function HowItWorksScreen({ navigation }) {
             <View style={styles.guidelineIcon}>
               <Clock size={20} color={COLORS.accentCyan} />
             </View>
-            <Text style={styles.guidelineHeading}>Complimentary Gear & Support</Text>
+            <Text style={styles.guidelineHeading}>{t('howItWorks.gearSupportTitle')}</Text>
             <Text style={styles.guidelineBody}>
-              • 1 Sanitized ISI/DOT approved helmet included complimentary.{'\n'}
-              • 24/7 Roadside breakdown and towing assistance on call.
+              {t('howItWorks.gearSupportLine1')}{'\n'}
+              {t('howItWorks.gearSupportLine2')}
             </Text>
           </View>
         </View>
@@ -137,10 +139,12 @@ export default function HowItWorksScreen({ navigation }) {
 
       {/* FAQs */}
       <View style={styles.faqsSection}>
-        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+        <Text style={styles.sectionTitle}>{t('frequentlyAsked')}</Text>
         <View style={styles.faqList}>
           {FAQS_DATA.map((faq, index) => {
             const isOpen = openFaqIndex === index;
+            const qKey = `faqs.q${index + 1}`;
+            const aKey = `faqs.a${index + 1}`;
             return (
               <TouchableOpacity
                 key={index}
@@ -150,7 +154,7 @@ export default function HowItWorksScreen({ navigation }) {
               >
                 <View style={styles.faqHeader}>
                   <Text style={[styles.faqQuestion, isOpen && styles.faqQuestionActive]}>
-                    {faq.question}
+                    {t(qKey) !== qKey ? t(qKey) : faq.question}
                   </Text>
                   {isOpen ? (
                     <Minus size={18} color={COLORS.accentCyan} />
@@ -160,7 +164,7 @@ export default function HowItWorksScreen({ navigation }) {
                 </View>
 
                 {isOpen && (
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                  <Text style={styles.faqAnswer}>{t(aKey) !== aKey ? t(aKey) : faq.answer}</Text>
                 )}
               </TouchableOpacity>
             );
@@ -174,7 +178,7 @@ export default function HowItWorksScreen({ navigation }) {
         onPress={() => navigation.navigate('Motorbikes')}
         activeOpacity={0.8}
       >
-        <Text style={styles.exploreFleetBtnText}>Explore Available Bikes</Text>
+        <Text style={styles.exploreFleetBtnText}>{t('howItWorks.exploreAvailableBikes')}</Text>
         <ArrowRight size={16} color="#050B14" strokeWidth={2.5} />
       </TouchableOpacity>
     </ScrollView>

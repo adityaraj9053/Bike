@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import './src/i18n';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -54,9 +55,15 @@ export default function App() {
   };
 
   const handleStartBooking = (bike) => {
-    setSelectedBike(bike);
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+    if (bike) {
+      setSelectedBike(bike);
+    }
     if (navigationRef.current) {
-      navigationRef.current.navigate('Booking', { bike });
+      navigationRef.current.navigate('Booking', { bike: bike || selectedBike });
     }
   };
 

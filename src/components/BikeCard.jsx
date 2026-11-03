@@ -8,16 +8,47 @@ import {
 } from 'react-native';
 import { Star, Zap, Fuel, Cog, ArrowRight } from 'lucide-react-native';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 export default function BikeCard({
   bike,
   onSelectBike,
   onOpenBookModal,
   onStartBooking,
+  user,
+  onOpenAuth,
   style,
   compact = false,
 }) {
+  const { t } = useTranslation();
   const isLimited = bike.statusBadge === 'LIMITED';
+
+  const getBadgeTranslation = (badge) => {
+    if (!badge) return '';
+    const map = {
+      'PREMIUM CHOICE': t('bikeCard.premiumChoice'),
+      'POPULAR': t('bikeCard.popular'),
+      'PREMIUM': t('bikeCard.premium'),
+      'SPORT RACING': t('bikeCard.sportRacing'),
+      'CLASSIC VINTAGE': t('bikeCard.classicVintage'),
+      'ECO FRIENDLY': t('bikeCard.ecoFriendly'),
+    };
+    return map[badge] || badge;
+  };
+
+  const handleBookPress = () => {
+    if (!user) {
+      if (onOpenAuth) {
+        onOpenAuth();
+      }
+      return;
+    }
+    if (onStartBooking) {
+      onStartBooking(bike);
+    } else if (onOpenBookModal) {
+      onOpenBookModal(bike);
+    }
+  };
 
   return (
     <View style={[styles.card, SHADOWS.card, compact && styles.cardCompact, style]}>
@@ -38,7 +69,7 @@ export default function BikeCard({
           {bike.badge ? (
             <View style={[styles.primaryBadge, compact && styles.badgeCompact]}>
               <Text style={[styles.primaryBadgeText, compact && styles.badgeTextCompact]}>
-                {bike.badge}
+                {getBadgeTranslation(bike.badge)}
               </Text>
             </View>
           ) : null}
@@ -51,7 +82,7 @@ export default function BikeCard({
             ]}
           >
             <Text style={[styles.statusBadgeText, compact && styles.badgeTextCompact]}>
-              {bike.statusBadge || 'AVAILABLE'}
+              {isLimited ? t('bikeCard.limited') : t('bikeCard.available')}
             </Text>
           </View>
         </View>
@@ -100,7 +131,7 @@ export default function BikeCard({
           <View style={[styles.specPill, compact && styles.specPillCompact]}>
             <Cog size={compact ? 10 : 12} color={COLORS.accentCyan} />
             <Text style={[styles.specText, compact && styles.specTextCompact]}>
-              {bike.specs?.transmission?.includes('Manual') ? 'Manual' : 'Auto'}
+              {bike.specs?.transmission?.includes('Manual') ? t('bikeCard.manual') : t('bikeCard.auto')}
             </Text>
           </View>
           <View style={[styles.specPill, compact && styles.specPillCompact]}>
@@ -115,11 +146,11 @@ export default function BikeCard({
         <View style={[styles.footerRow, compact && styles.footerRowCompact]}>
           <View style={compact && styles.priceBlockCompact}>
             <View style={styles.priceRow}>
-              <Text style={[styles.fromLabel, compact && styles.fromLabelCompact]}>from</Text>
+              <Text style={[styles.fromLabel, compact && styles.fromLabelCompact]}>{t('bikeCard.from')}</Text>
               <Text style={[styles.priceValue, compact && styles.priceValueCompact]}>
                 ${Math.round(bike.pricePerDay / 50)}
               </Text>
-              <Text style={[styles.perDayLabel, compact && styles.perDayLabelCompact]}>/day</Text>
+              <Text style={[styles.perDayLabel, compact && styles.perDayLabelCompact]}>{t('bikeCard.perDay')}</Text>
             </View>
             <Text style={[styles.inrSubtext, compact && styles.inrSubtextCompact]}>
               ₹{bike.pricePerDay.toLocaleString()} INR
@@ -129,16 +160,10 @@ export default function BikeCard({
           {/* Red Action Button */}
           <TouchableOpacity
             style={[styles.bookBtn, compact && styles.bookBtnCompact, SHADOWS.glowRed]}
-            onPress={() => {
-              if (onStartBooking) {
-                onStartBooking(bike);
-              } else if (onOpenBookModal) {
-                onOpenBookModal(bike);
-              }
-            }}
+            onPress={handleBookPress}
             activeOpacity={0.8}
           >
-            <Text style={[styles.bookBtnText, compact && styles.bookBtnTextCompact]}>Book</Text>
+            <Text style={[styles.bookBtnText, compact && styles.bookBtnTextCompact]}>{t('bikeCard.book')}</Text>
             <ArrowRight size={compact ? 12 : 14} color="#FFFFFF" strokeWidth={2.5} />
           </TouchableOpacity>
         </View>

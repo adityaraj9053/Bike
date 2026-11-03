@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './i18n';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EnquiryModal from './components/EnquiryModal';
@@ -32,6 +33,14 @@ export default function App() {
   // User state
   const [user, setUser] = useState(null);
 
+  // Language state: 'en' | 'hi'
+  const [language, setLanguage] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('bikerent_lang') || 'en';
+    }
+    return 'en';
+  });
+
   // Toasts
   const [toasts, setToasts] = useState([]);
 
@@ -58,7 +67,13 @@ export default function App() {
   };
 
   const handleStartBooking = (bike) => {
-    setSelectedBike(bike);
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+    if (bike) {
+      setSelectedBike(bike);
+    }
     setActivePage('booking');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -83,6 +98,8 @@ export default function App() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onStartBooking={() => handleStartBooking(selectedBike)}
         user={user}
+        language={language}
+        onLanguageChange={setLanguage}
       />
 
       {/* Main Page View */}
@@ -97,7 +114,7 @@ export default function App() {
           />
         )}
 
-        {activePage === 'motorbikes' && (
+        {(activePage === 'motorbikes' || activePage === 'fleet') && (
           <MotorbikesPage
             onSelectBike={handleSelectBike}
             onStartBooking={handleStartBooking}
@@ -115,6 +132,8 @@ export default function App() {
             onOpenWhatsApp={handleOpenWhatsApp}
             onSelectBike={handleSelectBike}
             onShowToast={showToast}
+            user={user}
+            onOpenAuth={() => setIsAuthOpen(true)}
           />
         )}
 

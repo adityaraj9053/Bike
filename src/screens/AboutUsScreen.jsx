@@ -18,27 +18,30 @@ import {
 } from 'lucide-react-native';
 import { IMAGES } from '../assets/images';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+import { useTranslation } from 'react-i18next';
 
 export default function AboutUsScreen({ navigation }) {
+  const { t } = useTranslation();
+
   const values = [
     {
-      title: 'Affordability',
-      desc: 'Premium motorcycles and scooters at competitive, transparent day rates with zero hidden charges.',
+      title: t('aboutUs.affordability'),
+      desc: t('aboutUs.affordabilityDesc'),
       icon: Award,
     },
     {
-      title: 'Unmatched Satisfaction',
-      desc: 'Dedicated concierge team focused on making your road adventure effortless and memorable.',
+      title: t('aboutUs.satisfactionTitle'),
+      desc: t('aboutUs.satisfactionDesc'),
       icon: Heart,
     },
     {
-      title: 'Mechanical Precision',
-      desc: 'In-house certified mechanics performing rigorous 24-point inspections on every vehicle before departure.',
+      title: t('aboutUs.precisionTitle'),
+      desc: t('aboutUs.precisionDesc'),
       icon: Wrench,
     },
     {
-      title: 'Rider Safety First',
-      desc: 'Complimentary certified helmets, comprehensive insurance coverage, and 24/7 roadside assistance.',
+      title: t('aboutUs.safetyTitle'),
+      desc: t('aboutUs.safetyDesc'),
       icon: ShieldCheck,
     },
   ];
@@ -51,13 +54,13 @@ export default function AboutUsScreen({ navigation }) {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.pretitle}>OUR STORY & VISION</Text>
+        <Text style={styles.pretitle}>{t('aboutUs.pretitle')}</Text>
         <Text style={styles.title}>
-          More Than a Ride.{'\n'}
-          <Text style={{ color: COLORS.accentCyan }}>It's Your Freedom.</Text>
+          {t('aboutUs.title1')}{'\n'}
+          <Text style={{ color: COLORS.accentCyan }}>{t('aboutUs.title2')}</Text>
         </Text>
         <Text style={styles.subtitle}>
-          Founded by passionate motorcyclists, The Road Eagle bridges the gap between high-end touring machines and everyday accessible rentals.
+          {t('aboutUs.subtitle')}
         </Text>
       </View>
 
@@ -65,19 +68,19 @@ export default function AboutUsScreen({ navigation }) {
       <View style={styles.statsGrid}>
         <View style={styles.statBox}>
           <Text style={styles.statNum}>500+</Text>
-          <Text style={styles.statLabel}>ACTIVE RIDERS</Text>
+          <Text style={styles.statLabel}>{t('aboutUs.activeRiders')}</Text>
         </View>
         <View style={styles.statBox}>
           <Text style={styles.statNum}>98%</Text>
-          <Text style={styles.statLabel}>SATISFACTION</Text>
+          <Text style={styles.statLabel}>{t('aboutUs.satisfaction')}</Text>
         </View>
         <View style={styles.statBox}>
           <Text style={styles.statNum}>50+</Text>
-          <Text style={styles.statLabel}>MOTORBIKES</Text>
+          <Text style={styles.statLabel}>{t('aboutUs.motorbikes')}</Text>
         </View>
         <View style={styles.statBox}>
           <Text style={styles.statNum}>24/7</Text>
-          <Text style={styles.statLabel}>SUPPORT</Text>
+          <Text style={styles.statLabel}>{t('aboutUs.support')}</Text>
         </View>
       </View>
 
@@ -89,19 +92,19 @@ export default function AboutUsScreen({ navigation }) {
           resizeMode="cover"
         />
         <View style={styles.storyContent}>
-          <Text style={styles.storyPretitle}>IN-HOUSE HUB & WORKSHOP</Text>
-          <Text style={styles.storyTitle}>Redefining Urban & Touring Mobility</Text>
+          <Text style={styles.storyPretitle}>{t('aboutUs.hubPretitle')}</Text>
+          <Text style={styles.storyTitle}>{t('aboutUs.hubTitle')}</Text>
           <Text style={styles.storyText}>
-            Every motorcycle in our fleet is maintained in our state-of-the-art facility. From precision engine tuning to genuine brake pads and tire pressure monitoring, we ensure you ride with total mechanical confidence.
+            {t('aboutUs.hubDesc')}
           </Text>
         </View>
       </View>
 
       {/* Core Values */}
       <View style={styles.valuesSection}>
-        <Text style={styles.sectionTitle}>What Drives Us</Text>
+        <Text style={styles.sectionTitle}>{t('aboutUs.whatDrivesUs')}</Text>
         <Text style={styles.sectionSubtitle}>
-          The guiding principles behind every reservation and customer interaction.
+          {t('aboutUs.valuesSubtitle')}
         </Text>
 
         <View style={styles.valuesList}>
@@ -126,7 +129,7 @@ export default function AboutUsScreen({ navigation }) {
         onPress={() => navigation.navigate('Motorbikes')}
         activeOpacity={0.8}
       >
-        <Text style={styles.ctaBtnText}>Browse Available Fleet</Text>
+        <Text style={styles.ctaBtnText}>{t('aboutUs.browseFleet')}</Text>
         <ArrowRight size={16} color="#050B14" strokeWidth={2.5} />
       </TouchableOpacity>
     </ScrollView>
