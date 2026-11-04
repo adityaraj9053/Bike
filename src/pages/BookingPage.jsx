@@ -24,7 +24,8 @@ export default function BookingPage({
   onShowToast, 
   onOpenWhatsApp,
   onGoBack,
-  user
+  user,
+  onOpenAuth
 }) {
   const { t, language } = useLanguage();
   const todayDateStr = new Date().toISOString().split('T')[0];
@@ -127,6 +128,17 @@ export default function BookingPage({
 
   const handleContinueToSummary = () => {
     setFormError('');
+    if (!user) {
+      if (onOpenAuth) onOpenAuth();
+      if (onShowToast) {
+        onShowToast(
+          language === 'hi' 
+            ? 'बुकिंग जारी रखने के लिए कृपया पहले लॉग इन या साइन अप करें।' 
+            : 'Please log in or sign up first to proceed with booking.'
+        );
+      }
+      return;
+    }
     if (!pickupDate || !returnDate) {
       setFormError(language === 'hi' ? 'कृपया पिकअप और वापसी की तिथि चुनें।' : 'Please select both pickup and return dates.');
       return;
@@ -145,6 +157,17 @@ export default function BookingPage({
 
   const handleProceedPayment = () => {
     setFormError('');
+    if (!user) {
+      if (onOpenAuth) onOpenAuth();
+      if (onShowToast) {
+        onShowToast(
+          language === 'hi' 
+            ? 'बुकिंग पूरी करने के लिए कृपया पहले लॉग इन या साइन अप करें।' 
+            : 'Please log in or sign up first to complete booking.'
+        );
+      }
+      return;
+    }
     let hasError = false;
 
     // 1. Name check
@@ -288,6 +311,53 @@ export default function BookingPage({
             <span>{language === 'hi' ? '2. विवरण और भुगतान' : '2. SUMMARY & PAYMENT'}</span>
           </div>
         </div>
+
+        {!user && (
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(2, 132, 199, 0.12), rgba(15, 23, 42, 0.95))',
+            border: '1px solid rgba(0, 163, 255, 0.35)',
+            borderRadius: '16px',
+            padding: '16px 22px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'rgba(0, 163, 255, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#00A3FF',
+                flexShrink: 0
+              }}>
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.98rem', marginBottom: '2px' }}>
+                  {language === 'hi' ? 'बुकिंग के लिए लॉग इन आवश्यक है' : 'Login Required to Complete Booking'}
+                </div>
+                <div style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
+                  {language === 'hi' ? 'आरक्षण जारी रखने के लिए कृपया पहले साइन इन या रजिस्टर करें।' : 'Please sign in or register to complete your reservation.'}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ padding: '9px 22px', fontSize: '0.88rem' }}
+              onClick={() => onOpenAuth && onOpenAuth()}
+            >
+              {language === 'hi' ? 'लॉग इन / साइन अप' : 'Log In / Sign Up'}
+            </button>
+          </div>
+        )}
 
         {formError && (
           <div style={{
@@ -613,7 +683,7 @@ export default function BookingPage({
                         <input
                           type="tel"
                           className={`form-input ${phoneError ? 'is-invalid' : ''}`}
-                          placeholder={countryCode === '+91' ? '9876543210' : 'Mobile number'}
+                          placeholder={countryCode === '+91' ? (language === 'hi' ? '10 अंकों का मोबाइल नंबर' : 'Enter 10-digit mobile number') : (language === 'hi' ? 'मोबाइल नंबर' : 'Enter mobile number')}
                           maxLength={15}
                           value={riderPhone}
                           onChange={(e) => handlePhoneChange(e.target.value)}

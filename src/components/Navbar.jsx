@@ -33,7 +33,7 @@ export default function Navbar({
           <div className="brand-logo-icon">
             <Compass size={20} />
           </div>
-          <span>THE ROAD EAGLE</span>
+          <span className="brand-logo-text">THE ROAD EAGLE</span>
         </div>
 
         {/* Desktop Nav Links */}

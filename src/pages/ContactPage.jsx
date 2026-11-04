@@ -145,7 +145,7 @@ export default function ContactPage({ onShowToast, onOpenWhatsApp, onGoBack }) {
                       <input
                         type="tel"
                         className="form-input"
-                        placeholder={countryCode === '+91' ? '9876543210' : 'Mobile number'}
+                        placeholder={countryCode === '+91' ? (language === 'hi' ? '10 अंकों का मोबाइल नंबर' : 'Enter 10-digit mobile number') : (language === 'hi' ? 'मोबाइल नंबर' : 'Enter mobile number')}
                         maxLength={15}
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}

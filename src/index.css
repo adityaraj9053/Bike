@@ -2306,3 +2306,20 @@ html, body {
   margin: 0 auto 28px !important;
   line-height: 1.6 !important;
 }
+
+
+/* ================= RESPONSIVE BRAND LOGO: HIDE TEXT ON MOBILE (< 580px) ================= */
+.brand-logo span,
+.brand-logo-text {
+  white-space: nowrap !important;
+}
+
+@media (max-width: 580px) {
+  .brand-logo-text,
+  .brand-logo span {
+    display: none !important;
+  }
+  .brand-logo {
+    gap: 0 !important;
+  }
+}

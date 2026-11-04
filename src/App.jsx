@@ -116,6 +116,16 @@ function MainApp() {
         targetCat = parsed.category;
       }
 
+      if (targetPage === 'booking' && !user) {
+        targetPage = 'motorbikes';
+        setIsAuthOpen(true);
+        showToast(
+          language === 'hi'
+            ? 'बुकिंग जारी रखने के लिए कृपया पहले लॉग इन या साइन अप करें।'
+            : 'Please log in or sign up first to proceed with booking.'
+        );
+      }
+
       setActivePage(targetPage);
       if (targetCat) setCatalogCategory(targetCat);
       if (targetBikeId) {
@@ -202,10 +212,20 @@ function MainApp() {
     }
   };
 
-  // Strictly 18+ check on booking
+  // Booking flow: Login check required before booking, followed by 18+ verification
   const handleStartBooking = (bike) => {
     const targetBike = bike || selectedBike || BIKES_DATA[0];
     setPendingBookingBike(targetBike);
+
+    if (!user) {
+      setIsAuthOpen(true);
+      showToast(
+        language === 'hi'
+          ? 'बुकिंग जारी रखने के लिए कृपया पहले लॉग इन या साइन अप करें।'
+          : 'Please log in or sign up first to proceed with booking.'
+      );
+      return;
+    }
 
     if (!isAgeVerified) {
       setIsAgeModalOpen(true);
@@ -218,6 +238,7 @@ function MainApp() {
     setIsAgeVerified(true);
     sessionStorage.setItem('road_eagle_age_verified', 'true');
     const target = pendingBookingBike || selectedBike || BIKES_DATA[0];
+    setPendingBookingBike(null);
     proceedToBookingPage(target);
     showToast(
       language === 'hi' 
@@ -253,6 +274,16 @@ function MainApp() {
           ? `स्वागत है, ${userData.name}!` 
           : `Welcome back, ${userData.name}!`
       );
+      // Seamlessly continue booking if user clicked book before logging in
+      if (pendingBookingBike) {
+        const target = pendingBookingBike;
+        setPendingBookingBike(null);
+        if (!isAgeVerified) {
+          setIsAgeModalOpen(true);
+        } else {
+          proceedToBookingPage(target);
+        }
+      }
     } else {
       localStorage.removeItem('road_eagle_user');
       showToast(
@@ -317,6 +348,7 @@ function MainApp() {
             onOpenWhatsApp={handleOpenWhatsApp}
             onGoBack={handleGoBack}
             user={user}
+            onOpenAuth={() => setIsAuthOpen(true)}
           />
         )}
 
