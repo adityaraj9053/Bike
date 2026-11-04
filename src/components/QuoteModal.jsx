@@ -1,125 +1,355 @@
 import React from 'react';
-import { X, Printer, Compass, CheckCircle2 } from 'lucide-react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  Image,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  ScrollView,
+  Share,
+} from 'react-native';
+import { X, Compass, Share2, ShieldCheck } from 'lucide-react-native';
+import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
 
-export default function QuoteModal({ isOpen, onClose, bookingData, bike }) {
-  if (!isOpen || !bike) return null;
+export default function QuoteModal({
+  visible,
+  onClose,
+  bookingData,
+  bike,
+}) {
+  if (!bike || !bookingData) return null;
 
-  const handlePrint = () => {
-    window.print();
+  const bookingRef = bookingData.refId || 'RDE-784920';
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message:
+          `THE ROAD EAGLE - Booking Voucher\n` +
+          `Ref: #${bookingRef}\n` +
+          `Vehicle: ${bike.name} (${bike.model})\n` +
+          `Pickup: ${bookingData.pickupDate} (${bookingData.pickupTime})\n` +
+          `Return: ${bookingData.returnDate} (${bookingData.returnTime})\n` +
+          `Rental Duration: ${bookingData.days} Days\n` +
+          `Total Payable: ₹${(bookingData.rentalCharge + (bike.deposit || 0)).toLocaleString()}\n` +
+          `Mandatory at pickup: Driving licence, ID proof, 2 photos.`,
+      });
+    } catch {}
   };
 
-  const bookingRef = bookingData?.refId || 'RDE-784920';
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px', background: '#ffffff', color: '#0f172a' }}>
-        <button 
-          className="modal-close-btn" 
-          onClick={onClose}
-          style={{ background: '#f1f5f9', color: '#334155', border: 'none' }}
-        >
-          <X size={18} />
-        </button>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.modalCard, SHADOWS.card]}>
+              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                <X size={18} color="#0F172A" />
+              </TouchableOpacity>
 
-        {/* Printable Voucher Header */}
-        <div style={{ borderBottom: '2px solid #00A3FF', paddingBottom: '20px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0284c7', fontWeight: 800, fontSize: '1.2rem', marginBottom: '4px' }}>
-                <Compass size={24} color="#0284c7" />
-                <span>THE ROAD EAGLE</span>
-              </div>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Premium Motorcycle & Scooter Rentals</p>
-              <p style={{ fontSize: '0.82rem', color: '#64748b' }}>123 Rider Avenue, Sector 5 • support@theroadeagle.com</p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '0.75rem', fontWeight: 700, padding: '4px 10px', borderRadius: '4px' }}>
-                OFFICIAL QUOTATION / VOUCHER
-              </span>
-              <p style={{ fontSize: '0.85rem', fontWeight: 700, marginTop: '8px', color: '#0f172a' }}>Ref: #{bookingRef}</p>
-              <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Date: {new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-        </div>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Printable Light Theme Invoice Card */}
+                <View style={styles.voucherContainer}>
+                  {/* Brand header */}
+                  <View style={styles.voucherHeader}>
+                    <View>
+                      <View style={styles.brandRow}>
+                        <Compass size={20} color="#0284C7" />
+                        <Text style={styles.brandName}>THE ROAD EAGLE</Text>
+                      </View>
+                      <Text style={styles.brandTagline}>Premium Motorcycle Rentals</Text>
+                      <Text style={styles.brandTagline}>123 Rider Avenue, Sector 5</Text>
+                    </View>
+                    <View style={styles.voucherRefBox}>
+                      <Text style={styles.refBadge}>OFFICIAL VOUCHER</Text>
+                      <Text style={styles.refText}>Ref: #{bookingRef}</Text>
+                      <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
+                    </View>
+                  </View>
 
-        {/* Vehicle Details */}
-        <div style={{ display: 'flex', gap: '20px', background: '#f8fafc', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
-          <img
-            src={bike.image}
-            alt={bike.name}
-            style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '6px' }}
-          />
-          <div>
-            <h4 style={{ fontSize: '1.15rem', color: '#0f172a', margin: '0 0 4px' }}>{bike.name}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 8px' }}>{bike.model} • {bike.specs?.displacement}</p>
-            <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: '#334155' }}>
-              <span><strong>Pickup:</strong> {bookingData.pickupDate} ({bookingData.pickupTime})</span>
-              <span><strong>Return:</strong> {bookingData.returnDate} ({bookingData.returnTime})</span>
-            </div>
-          </div>
-        </div>
+                  {/* Vehicle summary */}
+                  <View style={styles.vehicleCard}>
+                    <Image
+                      source={bike.imageSource}
+                      style={styles.vehicleImg}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.vehicleDetails}>
+                      <Text style={styles.vehicleName}>{bike.name}</Text>
+                      <Text style={styles.vehicleModel}>
+                        {bike.model} • {bike.specs?.displacement}
+                      </Text>
+                      <Text style={styles.scheduleText}>
+                        Pickup: {bookingData.pickupDate} ({bookingData.pickupTime})
+                      </Text>
+                      <Text style={styles.scheduleText}>
+                        Return: {bookingData.returnDate} ({bookingData.returnTime})
+                      </Text>
+                    </View>
+                  </View>
 
-        {/* Cost Breakdown */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', marginBottom: '24px' }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9', textAlign: 'left', borderBottom: '1px solid #cbd5e1' }}>
-              <th style={{ padding: '10px 12px' }}>Description</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center' }}>Duration</th>
-              <th style={{ padding: '10px 12px', textAlign: 'right' }}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '12px' }}>Base Rental ({bike.name}) @ ₹{bike.pricePerDay}/day</td>
-              <td style={{ padding: '12px', textAlign: 'center' }}>{bookingData.days} Days</td>
-              <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600 }}>₹{bookingData.rentalCharge.toLocaleString()}</td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '12px' }}>Refundable Security Deposit (Returned post vehicle inspection)</td>
-              <td style={{ padding: '12px', textAlign: 'center' }}>-</td>
-              <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#0284c7' }}>₹{bike.deposit.toLocaleString()}*</td>
-            </tr>
-            <tr style={{ borderBottom: '2px solid #0f172a', background: '#f8fafc' }}>
-              <td style={{ padding: '14px 12px', fontWeight: 800 }}>Total Estimated Payable</td>
-              <td style={{ padding: '14px 12px' }}></td>
-              <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 800, fontSize: '1.15rem', color: '#0284c7' }}>
-                ₹{(bookingData.rentalCharge + bike.deposit).toLocaleString()}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  {/* Price breakdown */}
+                  <View style={styles.breakdownTable}>
+                    <View style={styles.tableRow}>
+                      <Text style={styles.colDesc}>
+                        Base Rental ({bookingData.days} Days @ ₹{bike.pricePerDay})
+                      </Text>
+                      <Text style={styles.colAmount}>
+                        ₹{bookingData.rentalCharge?.toLocaleString()}
+                      </Text>
+                    </View>
 
-        {/* Pickup checklist */}
-        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '12px 16px', fontSize: '0.82rem', color: '#1e40af', marginBottom: '24px' }}>
-          <strong>Mandatory at Pickup:</strong> Original Driving Licence, Government ID (Aadhaar/Passport), 2 Photographs. 1 Helmet included complimentary.
-        </div>
+                    <View style={styles.tableRow}>
+                      <Text style={styles.colDesc}>Refundable Security Deposit*</Text>
+                      <Text style={[styles.colAmount, { color: '#0284C7' }]}>
+                        ₹{bike.deposit?.toLocaleString()}
+                      </Text>
+                    </View>
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: '14px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{ padding: '10px 20px', borderRadius: '6px', background: '#f1f5f9', color: '#334155', fontWeight: 600 }}
-          >
-            Close
-          </button>
-          <button
-            onClick={handlePrint}
-            style={{
-              padding: '10px 24px',
-              borderRadius: '6px',
-              background: '#0284c7',
-              color: '#ffffff',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <Printer size={16} />
-            <span>Print / Save PDF</span>
-          </button>
-        </div>
-      </div>
-    </div>
+                    <View style={[styles.tableRow, styles.totalRow]}>
+                      <Text style={styles.totalLabel}>Total Estimated Payable</Text>
+                      <Text style={styles.totalAmount}>
+                        ₹{(bookingData.rentalCharge + (bike.deposit || 0)).toLocaleString()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Checklist banner */}
+                  <View style={styles.checklistBanner}>
+                    <ShieldCheck size={16} color="#1D4ED8" />
+                    <Text style={styles.checklistText}>
+                      <Text style={{ fontWeight: '700' }}>Mandatory at pickup: </Text>
+                      Original Driving Licence, Govt ID (Aadhaar/Passport), 2 Photos. 1 Helmet included free.
+                    </Text>
+                  </View>
+
+                  {/* Action buttons */}
+                  <View style={styles.actionsRow}>
+                    <TouchableOpacity
+                      style={styles.shareBtn}
+                      onPress={handleShare}
+                      activeOpacity={0.8}
+                    >
+                      <Share2 size={16} color="#FFFFFF" />
+                      <Text style={styles.shareBtnText}>Share Voucher</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.doneBtn}
+                      onPress={onClose}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.doneBtnText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: COLORS.bgOverlay,
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.xl,
+    padding: 18,
+    maxHeight: '92%',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.full,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  voucherContainer: {
+    paddingTop: 8,
+  },
+  voucherHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 2,
+    borderBottomColor: '#00A3FF',
+    paddingBottom: 14,
+    marginBottom: 16,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  brandName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0284C7',
+  },
+  brandTagline: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  voucherRefBox: {
+    alignItems: 'flex-end',
+  },
+  refBadge: {
+    backgroundColor: '#E0F2FE',
+    color: '#0369A1',
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  refText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  dateText: {
+    fontSize: 10,
+    color: '#64748B',
+  },
+  vehicleCard: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderRadius: RADIUS.md,
+    padding: 12,
+    gap: 12,
+    marginBottom: 16,
+  },
+  vehicleImg: {
+    width: 80,
+    height: 60,
+    borderRadius: RADIUS.sm,
+  },
+  vehicleDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  vehicleName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  vehicleModel: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  scheduleText: {
+    fontSize: 11,
+    color: '#334155',
+  },
+  breakdownTable: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  totalRow: {
+    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 0,
+    borderTopWidth: 2,
+    borderTopColor: '#0F172A',
+    paddingVertical: 12,
+  },
+  colDesc: {
+    fontSize: 12,
+    color: '#334155',
+    flex: 1,
+  },
+  colAmount: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  totalLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  totalAmount: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0284C7',
+  },
+  checklistBanner: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: RADIUS.sm,
+    padding: 10,
+    marginBottom: 16,
+  },
+  checklistText: {
+    fontSize: 11,
+    color: '#1E40AF',
+    flex: 1,
+    lineHeight: 16,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'flex-end',
+  },
+  shareBtn: {
+    backgroundColor: '#0284C7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: RADIUS.full,
+  },
+  shareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  doneBtn: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: RADIUS.full,
+  },
+  doneBtnText: {
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+});

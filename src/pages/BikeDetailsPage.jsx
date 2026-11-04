@@ -23,10 +23,23 @@ export default function BikeDetailsPage({
   onOpenWhatsApp, 
   onSelectBike,
   onShowToast,
+
   onGoBack
+
+  user,
+  onOpenAuth,
+
 }) {
   const { t, language } = useLanguage();
   const [activeImage, setActiveImage] = useState(bike.image);
+
+  const handleBooking = (targetBike) => {
+    if (!user) {
+      if (onOpenAuth) onOpenAuth();
+      return;
+    }
+    if (onStartBooking) onStartBooking(targetBike || bike);
+  };
 
   // Fallback to bike.image if bike changes
   const gallery = bike.gallery || [bike.image];
@@ -150,7 +163,7 @@ export default function BikeDetailsPage({
                   bike={bike}
                   buttonText={t('bookThisBike')}
                   onShowToast={onShowToast}
-                  onStartBooking={onStartBooking}
+                  onStartBooking={handleBooking}
                 />
                 <button
                   className="btn-whatsapp-dark"

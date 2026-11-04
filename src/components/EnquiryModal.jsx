@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+//<<<<<<< feature/client-requirements
 import { X, MessageCircle, Send, CheckCircle2, PhoneCall, AlertCircle } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
 import { COUNTRY_CODES } from '../data/countries';
@@ -7,6 +8,30 @@ import { useLanguage } from '../context/LanguageContext';
 export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToast, user }) {
   const { t, language } = useLanguage();
   const [bikeId, setBikeId] = useState(selectedBike?.id || 'night-hawk-cruiser');
+//=======
+// import {
+//   View,
+//   Text,
+//   StyleSheet,
+//   Modal,
+//   TextInput,
+//   TouchableOpacity,
+//   TouchableWithoutFeedback,
+//   ScrollView,
+//   Linking,
+// } from 'react-native';
+// import { X, MessageCircle, Send, CheckCircle2 } from 'lucide-react-native';
+// import { BIKES_DATA } from '../data/bikes';
+// import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+
+// export default function EnquiryModal({
+//   visible,
+//   onClose,
+//   selectedBike,
+//   onShowToast,
+// }) {
+//   const [bikeId, setBikeId] = useState(selectedBike?.id || BIKES_DATA[0].id);
+// >>>>>>> app
   const [fullName, setFullName] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [phone, setPhone] = useState('');
@@ -20,6 +45,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
       setBikeId(selectedBike.id);
     }
   }, [selectedBike]);
+
 
   useEffect(() => {
     // Keep inputs strictly clean on close or logout
@@ -60,6 +86,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
       (user?.email ? `Email: ${user.email}\n` : '') +
       (message ? `Note: ${message}` : '')
     );
+//<<<<<<< feature/client-requirements
     window.open(`https://api.whatsapp.com/send?phone=919876543210&text=${text}`, '_blank');
     if (onShowToast) {
       onShowToast(
@@ -90,6 +117,17 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
           ? `${currentBike.name} के लिए पूछताछ प्राप्त हुई! हमारी टीम शीघ्र ही आपसे संपर्क करेगी।` 
           : `Enquiry received for ${currentBike.name}! Our team will connect with you shortly.`
       );
+// =======
+//     Linking.openURL(`https://wa.me/919876543210?text=${text}`).catch(() => {});
+//     if (onShowToast) onShowToast(`Redirecting to WhatsApp for ${currentBike.name}!`);
+//     onClose();
+//   };
+
+//   const handleSubmit = () => {
+//     setSubmitted(true);
+//     if (onShowToast) {
+//       onShowToast(`Enquiry received for ${currentBike.name}! Our team will call you shortly.`);
+// >>>>>>> app
     }
     setTimeout(() => {
       setSubmitted(false);
@@ -98,6 +136,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
   };
 
   return (
+//<<<<<<< feature/client-requirements
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 10000, overflowX: 'hidden' }}>
       <div 
         className="modal-card" 
@@ -347,5 +386,162 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
         )}
       </div>
     </div>
+//
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: COLORS.bgOverlay,
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.borderCard,
+    padding: 20,
+    maxHeight: '92%',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.bgCardAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(0, 163, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  form: {
+    gap: 14,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 6,
+  },
+  bikeChipsScroll: {
+    marginBottom: 6,
+  },
+  bikeChipsContent: {
+    gap: 8,
+  },
+  bikeChip: {
+    backgroundColor: COLORS.bgCardAlt,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: RADIUS.full,
+  },
+  bikeChipActive: {
+    backgroundColor: COLORS.accentCyan,
+    borderColor: COLORS.accentCyan,
+  },
+  bikeChipText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  bikeChipTextActive: {
+    color: '#050B14',
+    fontWeight: '700',
+  },
+  inputGroup: {},
+  input: {
+    backgroundColor: COLORS.bgCardAlt,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: COLORS.textPrimary,
+    fontSize: 13,
+  },
+  textArea: {
+    height: 70,
+    textAlignVertical: 'top',
+  },
+  datesRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  whatsAppBtn: {
+    backgroundColor: COLORS.accentCyan,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: RADIUS.full,
+    paddingVertical: 13,
+    marginTop: 6,
+  },
+  whatsAppBtnText: {
+    color: '#050B14',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  submitBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.borderCard,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: RADIUS.full,
+    paddingVertical: 11,
+  },
+  submitBtnText: {
+    color: COLORS.accentCyan,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  submittedWrap: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    gap: 10,
+  },
+  submittedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  submittedSubtitle: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 16,
+  },
+});

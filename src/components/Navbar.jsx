@@ -20,9 +20,20 @@ export default function Navbar({
   ];
 
   const handleNavClick = (id) => {
-    setActivePage(id);
+    if (setActivePage) {
+      setActivePage(id);
+    }
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined' && window.scrollTo) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const isItemActive = (itemId) => {
+    if (itemId === 'motorbikes') {
+      return activePage === 'motorbikes' || activePage === 'fleet';
+    }
+    return activePage === itemId;
   };
 
   return (
@@ -42,7 +53,7 @@ export default function Navbar({
             {navItems.map((item) => (
               <li
                 key={item.id}
-                className={`nav-link ${activePage === item.id ? 'active' : ''}`}
+                className={`nav-link ${isItemActive(item.id) ? 'active' : ''}`}
                 onClick={() => handleNavClick(item.id)}
               >
                 {item.label}
@@ -83,69 +94,3 @@ export default function Navbar({
               <User size={15} color="#00A3FF" />
               <span>{user.name.split(' ')[0]}</span>
             </button>
-          ) : (
-            <button 
-              className="btn-outline" 
-              style={{ padding: '7px 16px', fontSize: '0.85rem' }}
-              onClick={onOpenAuth}
-            >
-              <User size={15} />
-              <span>{t('navLogin')}</span>
-            </button>
-          )}
-
-          {/* Mobile Menu Toggle Button */}
-          <button 
-            type="button"
-            className="mobile-hamburger-btn" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="mobile-nav-drawer">
-          {navItems.map((item) => (
-            <div
-              key={item.id}
-              className={`mobile-nav-item ${activePage === item.id ? 'active' : ''}`}
-              onClick={() => handleNavClick(item.id)}
-            >
-              {item.label}
-            </div>
-          ))}
-
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '8px 0' }}></div>
-
-          {/* Language Toggle in Mobile Drawer */}
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              color: '#cbd5e1',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              padding: '10px 16px',
-              borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              width: '100%',
-              cursor: 'pointer'
-            }}
-          >
-            <Globe size={17} color="#00A3FF" />
-            <span>{language === 'en' ? 'हिंदी में बदलें (Switch to Hindi)' : 'Switch to English'}</span>
-          </button>
-        </div>
-      )}
-    </header>
-  );
-}

@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+, useEffect } from 'react';
+
+import './i18n';
+
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
@@ -16,8 +19,11 @@ import AboutUsPage from './pages/AboutUsPage';
 import ContactPage from './pages/ContactPage';
 
 import { BIKES_DATA } from './data/bikes';
+
 import { MessageCircle, CheckCircle2 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { FaWhatsapp } from 'react-icons/fa';
+
 
 function parseHash() {
   const raw = window.location.hash.replace(/^#/, '');
@@ -68,6 +74,14 @@ function MainApp() {
     } catch {
       return null;
     }
+  });
+
+  // Language state: 'en' | 'hi'
+  const [language, setLanguage] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('bikerent_lang') || 'en';
+    }
+    return 'en';
   });
 
   // Toasts
@@ -175,10 +189,21 @@ function MainApp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+
   const proceedToBookingPage = (bike) => {
     const target = bike || selectedBike || BIKES_DATA[0];
     setNavHistory((prev) => [...prev, { page: activePage, bike: selectedBike, category: catalogCategory }]);
     setSelectedBike(target);
+
+  const handleStartBooking = (bike) => {
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+    if (bike) {
+      setSelectedBike(bike);
+    }
+
     setActivePage('booking');
 
     window.history.pushState(
@@ -304,7 +329,10 @@ function MainApp() {
         activePage={activePage}
         setActivePage={(page) => handleNavigate(page, 'all', true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onStartBooking={() => handleStartBooking(selectedBike)}
         user={user}
+        language={language}
+        onLanguageChange={setLanguage}
       />
 
       {/* Main Page View */}
@@ -319,7 +347,7 @@ function MainApp() {
           />
         )}
 
-        {activePage === 'motorbikes' && (
+        {(activePage === 'motorbikes' || activePage === 'fleet') && (
           <MotorbikesPage
             onSelectBike={(bike) => handleSelectBike(bike, true)}
             onStartBooking={handleStartBooking}
@@ -338,7 +366,12 @@ function MainApp() {
             onOpenWhatsApp={handleOpenWhatsApp}
             onSelectBike={(bike) => handleSelectBike(bike, true)}
             onShowToast={showToast}
+
             onGoBack={handleGoBack}
+
+            user={user}
+            onOpenAuth={() => setIsAuthOpen(true)}
+
           />
         )}
 
@@ -384,10 +417,32 @@ function MainApp() {
       {/* Floating WhatsApp Quick Action Button in Green on Left Side */}
       <div 
         onClick={() => handleOpenWhatsApp()}
+
         className="floating-whatsapp-btn"
-        title="Chat on WhatsApp (+91 98765 43210)"
+
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '24px',
+          zIndex: 999,
+          background: '#25D366',
+          color: '#ffffff',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 6px 24px rgba(37, 211, 102, 0.45)',
+          cursor: 'pointer',
+          transition: 'transform 0.2s ease, background 0.2s ease'
+        }}
+        title="Chat on WhatsApp"
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
       >
-        <MessageCircle size={28} />
+        <FaWhatsapp size={28} />
+
       </div>
 
       {/* Persistent Bottom Navigation Bar on Every Page */}

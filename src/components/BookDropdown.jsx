@@ -25,7 +25,18 @@ export default function BookDropdown({
     <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
       <button
         type="button"
+//<<<<<<< feature/client-requirements
         onClick={handleBookClick}
+//=======
+//         onClick={(e) => {
+//           e.stopPropagation();
+//           if (onStartBooking && bike) {
+//             onStartBooking(bike);
+//           } else {
+//             toggleDropdown(!isOpen);
+//           }
+//         }}
+// >>>>>>> app
         style={{
           background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
           color: '#ffffff',
