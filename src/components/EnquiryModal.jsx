@@ -22,8 +22,16 @@ export default function EnquiryModal({ isOpen, onClose, selectedBike, onShowToas
   }, [selectedBike]);
 
   useEffect(() => {
-    // Keep inputs strictly clean with placeholders visible
-  }, [user]);
+    // Keep inputs strictly clean on close or logout
+    if (!isOpen || !user) {
+      setFullName('');
+      setPhone('');
+      setStartDate('');
+      setEndDate('');
+      setMessage('');
+      setSubmitted(false);
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 

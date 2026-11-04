@@ -286,6 +286,9 @@ function MainApp() {
       }
     } else {
       localStorage.removeItem('road_eagle_user');
+      sessionStorage.removeItem('road_eagle_age_verified');
+      setIsAgeVerified(false);
+      setPendingBookingBike(null);
       showToast(
         language === 'hi' 
           ? 'सफलतापूर्वक साइन आउट किया गया।' 

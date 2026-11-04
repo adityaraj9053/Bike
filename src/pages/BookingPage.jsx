@@ -103,7 +103,16 @@ export default function BookingPage({
   };
 
   useEffect(() => {
-    // Keep inputs clean so placeholders are visible to the user
+    // When user logs out, reset rider input fields
+    if (!user) {
+      setRiderName('');
+      setRiderPhone('');
+      setRiderEmail('');
+      setNameError('');
+      setPhoneError('');
+      setEmailError('');
+      setFormError('');
+    }
   }, [user]);
 
   const bike = selectedBike || BIKES_DATA[0];

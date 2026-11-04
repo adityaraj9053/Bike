@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, ShieldCheck, ArrowRight, User, Calendar, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -17,18 +17,46 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
-  if (!isOpen) return null;
+  // Complete reset of all input fields and states
+  const resetAllFields = () => {
+    setEmail('');
+    setName('');
+    setDob('');
+    setOtp('');
+    setOtpSent(false);
+    setErrorMsg('');
+    setInfoMsg('');
+    setActiveTab('signin');
+  };
 
-  const resetState = () => {
+  const resetOtpOnly = () => {
     setOtp('');
     setOtpSent(false);
     setErrorMsg('');
     setInfoMsg('');
   };
 
+  // Reset all states and inputs when user logs out
+  useEffect(() => {
+    if (!user) {
+      resetAllFields();
+    }
+  }, [user]);
+
+  // Reset OTP whenever modal opens or closes
+  useEffect(() => {
+    setOtp('');
+    setOtpSent(false);
+    setErrorMsg('');
+    setInfoMsg('');
+    if (!isOpen && !user) {
+      resetAllFields();
+    }
+  }, [isOpen, user]);
+
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
-    resetState();
+    resetOtpOnly();
   };
 
   // Exact age calculation logic from DOB
@@ -54,6 +82,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
   const handleSendCode = (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setOtp(''); // Always clear old OTP when requesting a code
 
     // 1. Validate Email
     if (!email || !validateEmail(email)) {
@@ -111,8 +140,17 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!otp || otp.trim().length < 4) {
+    const submittedOtp = (otp || '').trim();
+    // Requirement: OTP must be immediately removed from the input field after filling once!
+    setOtp('');
+
+    if (!submittedOtp || submittedOtp.length < 4) {
       setErrorMsg(language === 'hi' ? 'कृपया 4-अंकों का OTP कोड दर्ज करें।' : 'Please enter the 4-digit verification code.');
+      return;
+    }
+
+    if (submittedOtp !== '1234') {
+      setErrorMsg(language === 'hi' ? 'अमान्य OTP कोड! कृपया 1234 दर्ज करें।' : 'Invalid OTP code! Please enter 1234.');
       return;
     }
 
@@ -144,15 +182,20 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
     }
 
     if (newUser) {
+      // Clear all inputs on success so no old credentials or OTP ever persist
+      resetAllFields();
       onLogin(newUser);
       onClose();
     }
   };
 
   const handleSignOut = () => {
+    resetAllFields();
     onLogin(null);
     onClose();
   };
+
+  if (!isOpen) return null;
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -389,13 +432,14 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="1234"
-                    maxLength={6}
+                    placeholder="• • • •"
+                    maxLength={4}
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.25rem', fontWeight: 800 }}
                     required
                     autoFocus
+                    autoComplete="off"
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
                     <button
@@ -407,7 +451,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, user }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => resetState()}
+                      onClick={() => resetOtpOnly()}
                       style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
                     >
                       {language === 'hi' ? 'ईमेल बदलें' : 'Change Email'}
