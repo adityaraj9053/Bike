@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { BIKES_DATA } from '../data/bikes';
 import BookDropdown from '../components/BookDropdown';
+import { FaWhatsapp } from 'react-icons/fa';
 
 export default function BikeDetailsPage({ 
   bike = BIKES_DATA[0], 
@@ -141,7 +142,7 @@ export default function BikeDetailsPage({
                   style={{ width: '100%', justifyContent: 'center', padding: '14px' }}
                   onClick={() => onOpenWhatsApp(bike)}
                 >
-                  <MessageCircle size={18} color="#00A3FF" />
+                  <FaWhatsapp size={18} color="#00A3FF" />
                   <span>Enquire</span>
                 </button>
               </div>

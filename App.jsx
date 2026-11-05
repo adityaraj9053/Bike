@@ -96,7 +96,7 @@ export default function App() {
           {/* Floating WhatsApp Quick Action Button */}
           <FloatingWhatsApp
             onPress={() => handleOpenWhatsApp()}
-            phone="919876543210"
+            phone="0000005467"
           />
 
           {/* Action Modals */}
