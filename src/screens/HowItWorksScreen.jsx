@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import {
   FileText,
@@ -22,6 +23,8 @@ import { useTranslation } from 'react-i18next';
 
 export default function HowItWorksScreen({ navigation }) {
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 860;
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
   const toggleFaq = (idx) => {
@@ -51,136 +54,156 @@ export default function HowItWorksScreen({ navigation }) {
     },
   ];
 
+  const guidelines = [
+    {
+      icon: FileText,
+      title: t('howItWorks.docsTitle'),
+      lines: [
+        t('howItWorks.docsLine1'),
+        t('howItWorks.docsLine2'),
+        t('howItWorks.docsLine3'),
+      ],
+    },
+    {
+      icon: ShieldCheck,
+      title: t('howItWorks.depositTitle'),
+      lines: [
+        t('howItWorks.depositLine1'),
+        t('howItWorks.depositLine2'),
+      ],
+    },
+    {
+      icon: Fuel,
+      title: t('howItWorks.fuelTitle'),
+      lines: [
+        t('howItWorks.fuelLine1'),
+        t('howItWorks.fuelLine2'),
+      ],
+    },
+    {
+      icon: Clock,
+      title: t('howItWorks.gearSupportTitle'),
+      lines: [
+        t('howItWorks.gearSupportLine1'),
+        t('howItWorks.gearSupportLine2'),
+      ],
+    },
+  ];
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        isWide && styles.contentContainerWide,
+      ]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.pretitle}>{t('howItWorks.pretitle')}</Text>
-        <Text style={styles.title}>
-          {t('howItWorks.title1')}{'\n'}
-          <Text style={{ color: COLORS.accentCyan }}>{t('howItWorks.title2')}</Text>
-        </Text>
-        <Text style={styles.subtitle}>
-          {t('howItWorks.subtitle')}
-        </Text>
-      </View>
-
-      {/* 4 Steps Vertical Cards */}
-      <View style={styles.stepsList}>
-        {steps.map((s, idx) => (
-          <View key={idx} style={[styles.stepCard, SHADOWS.card]}>
-            <View style={styles.stepNumBadge}>
-              <Text style={styles.stepNumText}>{s.num}</Text>
-            </View>
-            <Text style={styles.stepTitle}>{s.title}</Text>
-            <Text style={styles.stepDesc}>{s.desc}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Guidelines Section */}
-      <View style={styles.guidelinesSection}>
-        <Text style={styles.sectionTitle}>{t('howItWorks.guidelinesTitle')}</Text>
-        <Text style={styles.sectionSubtitle}>
-          {t('howItWorks.guidelinesSubtitle')}
-        </Text>
-
-        <View style={styles.guidelinesGrid}>
-          <View style={styles.guidelineCard}>
-            <View style={styles.guidelineIcon}>
-              <FileText size={20} color={COLORS.accentCyan} />
-            </View>
-            <Text style={styles.guidelineHeading}>{t('howItWorks.docsTitle')}</Text>
-            <Text style={styles.guidelineBody}>
-              {t('howItWorks.docsLine1')}{'\n'}
-              {t('howItWorks.docsLine2')}{'\n'}
-              {t('howItWorks.docsLine3')}
-            </Text>
-          </View>
-
-          <View style={styles.guidelineCard}>
-            <View style={styles.guidelineIcon}>
-              <ShieldCheck size={20} color={COLORS.accentCyan} />
-            </View>
-            <Text style={styles.guidelineHeading}>{t('howItWorks.depositTitle')}</Text>
-            <Text style={styles.guidelineBody}>
-              {t('howItWorks.depositLine1')}{'\n'}
-              {t('howItWorks.depositLine2')}
-            </Text>
-          </View>
-
-          <View style={styles.guidelineCard}>
-            <View style={styles.guidelineIcon}>
-              <Fuel size={20} color={COLORS.accentCyan} />
-            </View>
-            <Text style={styles.guidelineHeading}>{t('howItWorks.fuelTitle')}</Text>
-            <Text style={styles.guidelineBody}>
-              {t('howItWorks.fuelLine1')}{'\n'}
-              {t('howItWorks.fuelLine2')}
-            </Text>
-          </View>
-
-          <View style={styles.guidelineCard}>
-            <View style={styles.guidelineIcon}>
-              <Clock size={20} color={COLORS.accentCyan} />
-            </View>
-            <Text style={styles.guidelineHeading}>{t('howItWorks.gearSupportTitle')}</Text>
-            <Text style={styles.guidelineBody}>
-              {t('howItWorks.gearSupportLine1')}{'\n'}
-              {t('howItWorks.gearSupportLine2')}
-            </Text>
-          </View>
+      <View style={isWide ? styles.innerWrapperWide : styles.innerWrapper}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.pretitle}>{t('howItWorks.pretitle')}</Text>
+          <Text style={styles.title}>
+            {t('howItWorks.title1')}{'\n'}
+            <Text style={{ color: COLORS.accentCyan }}>{t('howItWorks.title2')}</Text>
+          </Text>
+          <Text style={styles.subtitle}>
+            {t('howItWorks.subtitle')}
+          </Text>
         </View>
-      </View>
 
-      {/* FAQs */}
-      <View style={styles.faqsSection}>
-        <Text style={styles.sectionTitle}>{t('frequentlyAsked')}</Text>
-        <View style={styles.faqList}>
-          {FAQS_DATA.map((faq, index) => {
-            const isOpen = openFaqIndex === index;
-            const qKey = `faqs.q${index + 1}`;
-            const aKey = `faqs.a${index + 1}`;
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[styles.faqCard, isOpen && styles.faqCardOpen]}
-                onPress={() => toggleFaq(index)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.faqHeader}>
-                  <Text style={[styles.faqQuestion, isOpen && styles.faqQuestionActive]}>
-                    {t(qKey) !== qKey ? t(qKey) : faq.question}
-                  </Text>
-                  {isOpen ? (
-                    <Minus size={18} color={COLORS.accentCyan} />
-                  ) : (
-                    <Plus size={18} color={COLORS.textSecondary} />
-                  )}
+        {/* 4 Steps Horizontal Cards */}
+        <View style={styles.stepsGrid}>
+          {steps.map((s, i) => (
+            <View key={i} style={[styles.stepCard, SHADOWS.card]}>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepNumCircle}>
+                  <Text style={styles.stepNumText}>{s.num}</Text>
                 </View>
-
-                {isOpen && (
-                  <Text style={styles.faqAnswer}>{t(aKey) !== aKey ? t(aKey) : faq.answer}</Text>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+                <Text style={styles.stepTitle}>{s.title}</Text>
+              </View>
+              <Text style={styles.stepDesc}>{s.desc}</Text>
+            </View>
+          ))}
         </View>
-      </View>
 
-      {/* Browse Fleet Button */}
-      <TouchableOpacity
-        style={styles.exploreFleetBtn}
-        onPress={() => navigation.navigate('Motorbikes')}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.exploreFleetBtnText}>{t('howItWorks.exploreAvailableBikes')}</Text>
-        <ArrowRight size={16} color="#050B14" strokeWidth={2.5} />
-      </TouchableOpacity>
+        {/* Guidelines Section (Horizontal, Non-Scrollable) */}
+        <View style={styles.guidelinesSection}>
+          <Text style={styles.sectionTitle}>{t('howItWorks.guidelinesTitle')}</Text>
+          <Text style={styles.sectionSubtitle}>
+            {t('howItWorks.guidelinesSubtitle')}
+          </Text>
+
+          <View style={styles.guidelinesGrid}>
+            {guidelines.map((item, idx) => {
+              const IconComp = item.icon;
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.guidelineCard,
+                    isWide && styles.guidelineCardWide,
+                    SHADOWS.card,
+                  ]}
+                >
+                  <View style={styles.guidelineIconBadge}>
+                    <IconComp size={20} color={COLORS.accentCyan} strokeWidth={2} />
+                  </View>
+                  <Text style={styles.guidelineHeading}>{item.title}</Text>
+                  <Text style={styles.guidelineBody}>
+                    {item.lines.join('\n')}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* FAQs */}
+        <View style={styles.faqsSection}>
+          <Text style={styles.sectionTitle}>{t('frequentlyAsked')}</Text>
+          <View style={styles.faqList}>
+            {FAQS_DATA.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              const qKey = `faqs.q${index + 1}`;
+              const aKey = `faqs.a${index + 1}`;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.faqCard, isOpen && styles.faqCardOpen]}
+                  onPress={() => toggleFaq(index)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.faqHeader}>
+                    <Text style={[styles.faqQuestion, isOpen && styles.faqQuestionActive]}>
+                      {t(qKey) !== qKey ? t(qKey) : faq.question}
+                    </Text>
+                    {isOpen ? (
+                      <Minus size={18} color={COLORS.accentCyan} />
+                    ) : (
+                      <Plus size={18} color={COLORS.textSecondary} />
+                    )}
+                  </View>
+
+                  {isOpen && (
+                    <Text style={styles.faqAnswer}>{t(aKey) !== aKey ? t(aKey) : faq.answer}</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Browse Fleet Button */}
+        <TouchableOpacity
+          style={styles.exploreFleetBtn}
+          onPress={() => navigation.navigate('Motorbikes')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.exploreFleetBtnText}>{t('howItWorks.exploreAvailableBikes')}</Text>
+          <ArrowRight size={16} color="#050B14" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -192,7 +215,19 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 48,
+  },
+  contentContainerWide: {
+    paddingHorizontal: 32,
+    paddingVertical: 36,
+  },
+  innerWrapper: {
+    width: '100%',
+  },
+  innerWrapperWide: {
+    maxWidth: 1140,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     marginBottom: 24,
@@ -216,41 +251,57 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 19,
   },
-  stepsList: {
+
+  /* Steps Grid */
+  stepsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 14,
     marginBottom: 36,
   },
   stepCard: {
+    flex: 1,
+    minWidth: 260,
     backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.borderCard,
+    borderRadius: RADIUS.lg,
     padding: 20,
   },
-  stepNumBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0, 163, 255, 0.12)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
+  stepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 10,
+  },
+  stepNumCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 163, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 163, 255, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepNumText: {
     color: COLORS.accentCyan,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
   },
   stepTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 6,
+    flex: 1,
   },
   stepDesc: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: COLORS.textSecondary,
-    lineHeight: 19,
+    lineHeight: 18,
   },
+
+  /* Guidelines Section: Horizontal, Non-Scrollable */
   guidelinesSection: {
     marginBottom: 36,
   },
@@ -266,35 +317,46 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   guidelinesGrid: {
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
   },
   guidelineCard: {
+    flex: 1,
+    minWidth: 150,
     backgroundColor: COLORS.bgCard,
     borderWidth: 1,
     borderColor: COLORS.borderCard,
-    borderRadius: RADIUS.md,
-    padding: 16,
+    borderRadius: RADIUS.lg,
+    padding: 18,
   },
-  guidelineIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(0, 163, 255, 0.12)',
+  guidelineCardWide: {
+    minWidth: 220,
+  },
+  guidelineIconBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(0, 163, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 163, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   guidelineHeading: {
     fontSize: 15,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   guidelineBody: {
     fontSize: 12,
     color: COLORS.textSecondary,
     lineHeight: 18,
   },
+
+  /* FAQs */
   faqsSection: {
     marginBottom: 30,
   },
@@ -336,6 +398,8 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.borderLight,
     paddingTop: 10,
   },
+
+  /* Explore Fleet Button */
   exploreFleetBtn: {
     backgroundColor: COLORS.accentCyan,
     borderRadius: RADIUS.full,

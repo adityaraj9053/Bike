@@ -17,6 +17,8 @@ import {
   Clock,
   Info,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check,
   CheckCircle2,
   ShieldCheck,
@@ -31,6 +33,15 @@ import {
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
 import { useTranslation } from 'react-i18next';
+
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const HOURS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+const MINUTES = ['00', '15', '30', '45'];
 
 const PICKUP_TIMES = [
   '09:00 AM (Hub Opens)',
@@ -104,6 +115,119 @@ export default function BookingScreen({
 
   // Dropdown modal state
   const [activePicker, setActivePicker] = useState(null); // 'pickup' | 'return' | null
+
+  // Calendar picker state
+  const [activeCalendarPicker, setActiveCalendarPicker] = useState(null); // 'pickup' | 'return' | null
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+
+  const openCalendarPicker = (type) => {
+    const targetDateStr = type === 'pickup' ? pickupDate : returnDate;
+    try {
+      const parts = targetDateStr.split('/');
+      if (parts.length === 3) {
+        const m = parseInt(parts[0], 10) - 1;
+        const y = parseInt(parts[2], 10);
+        if (!isNaN(m) && !isNaN(y)) {
+          setCalendarMonth(m);
+          setCalendarYear(y);
+        }
+      }
+    } catch (_) {}
+    setActiveCalendarPicker(type);
+  };
+
+  const handlePrevMonth = () => {
+    if (calendarMonth === 0) {
+      setCalendarMonth(11);
+      setCalendarYear((y) => y - 1);
+    } else {
+      setCalendarMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calendarMonth === 11) {
+      setCalendarMonth(0);
+      setCalendarYear((y) => y + 1);
+    } else {
+      setCalendarMonth((m) => m + 1);
+    }
+  };
+
+  const handleSelectDay = (day) => {
+    const mm = String(calendarMonth + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    const yyyy = String(calendarYear);
+    const formatted = `${mm}/${dd}/${yyyy}`;
+    if (activeCalendarPicker === 'pickup') {
+      setPickupDate(formatted);
+    } else if (activeCalendarPicker === 'return') {
+      setReturnDate(formatted);
+    }
+    setActiveCalendarPicker(null);
+  };
+
+  const calendarDays = useMemo(() => {
+    const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const blanks = Array(firstDayIndex).fill(null);
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    return [...blanks, ...days];
+  }, [calendarMonth, calendarYear]);
+
+  const isDaySelected = (day) => {
+    if (!day) return false;
+    const targetStr = activeCalendarPicker === 'pickup' ? pickupDate : returnDate;
+    const parts = targetStr.split('/');
+    if (parts.length === 3) {
+      const m = parseInt(parts[0], 10) - 1;
+      const d = parseInt(parts[1], 10);
+      const y = parseInt(parts[2], 10);
+      return m === calendarMonth && y === calendarYear && d === day;
+    }
+    return false;
+  };
+
+  // Time picker state (Hours, Minutes, AM/PM)
+  const [activeTimePicker, setActiveTimePicker] = useState(null); // 'pickup' | 'return' | null
+  const [selectedHour, setSelectedHour] = useState('09');
+  const [selectedMinute, setSelectedMinute] = useState('00');
+  const [selectedPeriod, setSelectedPeriod] = useState('AM');
+
+  const openTimePicker = (type) => {
+    const targetTimeStr = type === 'pickup' ? pickupTime : returnTime;
+    try {
+      const match = targetTimeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (match) {
+        setSelectedHour(match[1].padStart(2, '0'));
+        setSelectedMinute(match[2].padStart(2, '0'));
+        setSelectedPeriod(match[3].toUpperCase());
+      } else {
+        setSelectedHour('09');
+        setSelectedMinute('00');
+        setSelectedPeriod('AM');
+      }
+    } catch (_) {}
+    setActiveTimePicker(type);
+  };
+
+  const handleConfirmTime = () => {
+    let formatted = `${selectedHour}:${selectedMinute} ${selectedPeriod}`;
+    if (selectedHour === '09' && selectedMinute === '00' && selectedPeriod === 'AM') {
+      formatted += ' (Hub Opens)';
+    } else if (selectedHour === '08' && selectedMinute === '00' && selectedPeriod === 'PM') {
+      formatted += ' (Hub Closes)';
+    }
+
+    if (activeTimePicker === 'pickup') {
+      setPickupTime(formatted);
+    } else if (activeTimePicker === 'return') {
+      setReturnTime(formatted);
+    }
+    setActiveTimePicker(null);
+  };
+
 
   // Rider details for step 2
   const [riderName, setRiderName] = useState('Rahul Verma');
@@ -267,16 +391,18 @@ export default function BookingScreen({
                           <Calendar size={13} color="#94A3B8" />
                           <Text style={styles.fieldLabelText}>{t('reservation.pickupDate')}</Text>
                         </View>
-                        <View style={styles.inputBoxWithIcon}>
-                          <TextInput
-                            style={styles.textInputInside}
-                            value={pickupDate}
-                            onChangeText={setPickupDate}
-                            placeholder="MM/DD/YYYY"
-                            placeholderTextColor="#475569"
-                          />
-                          <Calendar size={16} color="#64748B" />
-                        </View>
+                        <TouchableOpacity
+                          style={styles.inputBoxWithIcon}
+                          onPress={() => openCalendarPicker('pickup')}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel="Select Pickup Date Calendar"
+                        >
+                          <Text style={styles.textInputInside}>
+                            {pickupDate}
+                          </Text>
+                          <Calendar size={16} color="#00A3FF" />
+                        </TouchableOpacity>
                       </View>
 
                       <View style={styles.formFieldCol}>
@@ -286,13 +412,15 @@ export default function BookingScreen({
                         </View>
                         <TouchableOpacity
                           style={styles.dropdownBox}
-                          onPress={() => setActivePicker('pickup')}
+                          onPress={() => openTimePicker('pickup')}
                           activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel="Select Pickup Time Clock"
                         >
                           <Text style={styles.dropdownValueText} numberOfLines={1}>
                             {pickupTime}
                           </Text>
-                          <ChevronDown size={16} color="#64748B" />
+                          <Clock size={16} color="#00A3FF" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -304,16 +432,18 @@ export default function BookingScreen({
                           <Calendar size={13} color="#94A3B8" />
                           <Text style={styles.fieldLabelText}>{t('reservation.returnDate')}</Text>
                         </View>
-                        <View style={styles.inputBoxWithIcon}>
-                          <TextInput
-                            style={styles.textInputInside}
-                            value={returnDate}
-                            onChangeText={setReturnDate}
-                            placeholder="MM/DD/YYYY"
-                            placeholderTextColor="#475569"
-                          />
-                          <Calendar size={16} color="#64748B" />
-                        </View>
+                        <TouchableOpacity
+                          style={styles.inputBoxWithIcon}
+                          onPress={() => openCalendarPicker('return')}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel="Select Return Date Calendar"
+                        >
+                          <Text style={styles.textInputInside}>
+                            {returnDate}
+                          </Text>
+                          <Calendar size={16} color="#00A3FF" />
+                        </TouchableOpacity>
                       </View>
 
                       <View style={styles.formFieldCol}>
@@ -323,13 +453,15 @@ export default function BookingScreen({
                         </View>
                         <TouchableOpacity
                           style={styles.dropdownBox}
-                          onPress={() => setActivePicker('return')}
+                          onPress={() => openTimePicker('return')}
                           activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel="Select Return Time Clock"
                         >
                           <Text style={styles.dropdownValueText} numberOfLines={1}>
                             {returnTime}
                           </Text>
-                          <ChevronDown size={16} color="#64748B" />
+                          <Clock size={16} color="#00A3FF" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -644,63 +776,250 @@ export default function BookingScreen({
         )}
       </View>
 
-      {/* ================= TIME PICKER MODAL ================= */}
+      {/* ================= CALENDAR PICKER MODAL ================= */}
       <Modal
-        visible={activePicker !== null}
+        visible={activeCalendarPicker !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setActivePicker(null)}
+        onRequestClose={() => setActiveCalendarPicker(null)}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setActivePicker(null)}
+          onPress={() => setActiveCalendarPicker(null)}
         >
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, styles.calendarModalContent]}>
+            {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {activePicker === 'pickup' ? 'Select Pickup Time' : 'Select Return Time'}
-              </Text>
-              <TouchableOpacity onPress={() => setActivePicker(null)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Calendar size={18} color="#00A3FF" />
+                <Text style={styles.modalTitle}>
+                  {activeCalendarPicker === 'pickup' ? 'Select Pickup Date' : 'Select Return Date'}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setActiveCalendarPicker(null)}>
                 <X size={18} color="#94A3B8" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 280 }}>
-              {(activePicker === 'pickup' ? PICKUP_TIMES : RETURN_TIMES).map((timeOption) => {
-                const isSelected =
-                  activePicker === 'pickup'
-                    ? pickupTime === timeOption
-                    : returnTime === timeOption;
+            {/* Month & Year Navigation Row */}
+            <View style={styles.calendarNavRow}>
+              <TouchableOpacity
+                style={styles.calendarNavBtn}
+                onPress={handlePrevMonth}
+                activeOpacity={0.7}
+              >
+                <ChevronLeft size={18} color="#38BDF8" />
+              </TouchableOpacity>
+              <Text style={styles.calendarNavMonthText}>
+                {MONTH_NAMES[calendarMonth]} {calendarYear}
+              </Text>
+              <TouchableOpacity
+                style={styles.calendarNavBtn}
+                onPress={handleNextMonth}
+                activeOpacity={0.7}
+              >
+                <ChevronRight size={18} color="#38BDF8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Weekday Row */}
+            <View style={styles.weekdayRow}>
+              {WEEKDAYS.map((day) => (
+                <Text key={day} style={styles.weekdayText}>
+                  {day}
+                </Text>
+              ))}
+            </View>
+
+            {/* Calendar Days Grid */}
+            <View style={styles.daysGrid}>
+              {calendarDays.map((day, idx) => {
+                if (day === null) {
+                  return <View key={`blank-${idx}`} style={styles.dayCellEmpty} />;
+                }
+                const selected = isDaySelected(day);
                 return (
                   <TouchableOpacity
-                    key={timeOption}
-                    style={[
-                      styles.timeOptionItem,
-                      isSelected && styles.timeOptionItemActive,
-                    ]}
-                    onPress={() => {
-                      if (activePicker === 'pickup') {
-                        setPickupTime(timeOption);
-                      } else {
-                        setReturnTime(timeOption);
-                      }
-                      setActivePicker(null);
-                    }}
+                    key={`day-${day}`}
+                    style={[styles.dayCell, selected && styles.dayCellSelected]}
+                    onPress={() => handleSelectDay(day)}
+                    activeOpacity={0.7}
                   >
-                    <Text
-                      style={[
-                        styles.timeOptionText,
-                        isSelected && styles.timeOptionTextActive,
-                      ]}
-                    >
-                      {timeOption}
+                    <Text style={[styles.dayCellText, selected && styles.dayCellTextSelected]}>
+                      {day}
                     </Text>
-                    {isSelected && <Check size={16} color="#00A3FF" />}
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+            </View>
+
+            {/* Calendar Footer */}
+            <View style={styles.calendarFooterRow}>
+              <TouchableOpacity
+                style={styles.calendarCancelBtn}
+                onPress={() => setActiveCalendarPicker(null)}
+              >
+                <Text style={styles.calendarCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.calendarTodayBtn}
+                onPress={() => {
+                  const today = new Date();
+                  setCalendarMonth(today.getMonth());
+                  setCalendarYear(today.getFullYear());
+                  handleSelectDay(today.getDate());
+                }}
+              >
+                <Text style={styles.calendarTodayText}>Select Today</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ================= TIME PICKER MODAL (Hours, Minutes, AM/PM) ================= */}
+      <Modal
+        visible={activeTimePicker !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveTimePicker(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setActiveTimePicker(null)}
+        >
+          <View style={[styles.modalContent, styles.timeModalContent]}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Clock size={18} color="#00A3FF" />
+                <Text style={styles.modalTitle}>
+                  {activeTimePicker === 'pickup' ? 'Select Pickup Time' : 'Select Return Time'}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setActiveTimePicker(null)}>
+                <X size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Time Digital Preview Banner */}
+            <View style={styles.timePreviewCard}>
+              <Clock size={20} color="#00A3FF" />
+              <Text style={styles.timePreviewDigits}>
+                {selectedHour}:{selectedMinute}
+              </Text>
+              <View style={styles.timePreviewPeriodBadge}>
+                <Text style={styles.timePreviewPeriodText}>{selectedPeriod}</Text>
+              </View>
+            </View>
+
+            {/* Select Hour */}
+            <Text style={styles.timeSectionLabel}>SELECT HOUR</Text>
+            <View style={styles.hoursGrid}>
+              {HOURS.map((hr) => {
+                const active = hr === selectedHour;
+                return (
+                  <TouchableOpacity
+                    key={hr}
+                    style={[styles.timeChip, active && styles.timeChipActive]}
+                    onPress={() => setSelectedHour(hr)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timeChipText, active && styles.timeChipTextActive]}>
+                      {hr}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Select Minute */}
+            <Text style={styles.timeSectionLabel}>SELECT MINUTE</Text>
+            <View style={styles.minutesGrid}>
+              {MINUTES.map((min) => {
+                const active = min === selectedMinute;
+                return (
+                  <TouchableOpacity
+                    key={min}
+                    style={[styles.timeChip, styles.minuteChip, active && styles.timeChipActive]}
+                    onPress={() => setSelectedMinute(min)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timeChipText, active && styles.timeChipTextActive]}>
+                      :{min}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Period AM/PM */}
+            <Text style={styles.timeSectionLabel}>PERIOD</Text>
+            <View style={styles.periodToggleRow}>
+              {['AM', 'PM'].map((p) => {
+                const active = p === selectedPeriod;
+                return (
+                  <TouchableOpacity
+                    key={p}
+                    style={[styles.periodToggleBtn, active && styles.periodToggleBtnActive]}
+                    onPress={() => setSelectedPeriod(p)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.periodToggleText, active && styles.periodToggleTextActive]}>
+                      {p}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Quick Hub Presets */}
+            <View style={styles.quickTimePresetsRow}>
+              <TouchableOpacity
+                style={styles.quickPresetChip}
+                onPress={() => {
+                  setSelectedHour('09');
+                  setSelectedMinute('00');
+                  setSelectedPeriod('AM');
+                }}
+              >
+                <Text style={styles.quickPresetChipText}>09:00 AM (Opens)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickPresetChip}
+                onPress={() => {
+                  setSelectedHour('12');
+                  setSelectedMinute('00');
+                  setSelectedPeriod('PM');
+                }}
+              >
+                <Text style={styles.quickPresetChipText}>12:00 PM</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickPresetChip}
+                onPress={() => {
+                  setSelectedHour('08');
+                  setSelectedMinute('00');
+                  setSelectedPeriod('PM');
+                }}
+              >
+                <Text style={styles.quickPresetChipText}>08:00 PM (Closes)</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Confirm Time Button */}
+            <TouchableOpacity
+              style={styles.confirmTimeBtn}
+              onPress={handleConfirmTime}
+              activeOpacity={0.85}
+            >
+              <Check size={16} color="#FFFFFF" strokeWidth={2.5} />
+              <Text style={styles.confirmTimeBtnText}>
+                Confirm {selectedHour}:{selectedMinute} {selectedPeriod}
+              </Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -795,6 +1114,266 @@ export default function BookingScreen({
 }
 
 const styles = StyleSheet.create({
+
+  /* Calendar Modal Styles */
+  calendarModalContent: {
+    maxWidth: 380,
+    padding: 20,
+    backgroundColor: '#0F172A',
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  calendarNavRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 14,
+    paddingHorizontal: 6,
+  },
+  calendarNavBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calendarNavMonthText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  weekdayText: {
+    width: 40,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginBottom: 16,
+  },
+  dayCell: {
+    width: '14.28%',
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 2,
+    borderRadius: RADIUS.full,
+  },
+  dayCellEmpty: {
+    width: '14.28%',
+    height: 40,
+  },
+  dayCellSelected: {
+    backgroundColor: '#00A3FF',
+  },
+  dayCellText: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#CBD5E1',
+  },
+  dayCellTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  calendarFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#1E293B',
+    paddingTop: 12,
+  },
+  calendarCancelBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  calendarCancelText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  calendarTodayBtn: {
+    backgroundColor: 'rgba(0, 163, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 163, 255, 0.3)',
+    borderRadius: RADIUS.full,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+  },
+  calendarTodayText: {
+    color: '#38BDF8',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+
+  /* Time Picker Modal Styles */
+  timeModalContent: {
+    maxWidth: 400,
+    padding: 22,
+    backgroundColor: '#0F172A',
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  timePreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(2, 132, 199, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderRadius: RADIUS.md,
+    paddingVertical: 12,
+    marginVertical: 14,
+  },
+  timePreviewDigits: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 2,
+  },
+  timePreviewPeriodBadge: {
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+  },
+  timePreviewPeriodText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  timeSectionLabel: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 6,
+  },
+  hoursGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  timeChip: {
+    flexBasis: '14.5%',
+    flexGrow: 1,
+    height: 38,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeChipActive: {
+    backgroundColor: '#00A3FF',
+    borderColor: '#38BDF8',
+  },
+  timeChipText: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  timeChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  minutesGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  minuteChip: {
+    flex: 1,
+    height: 40,
+  },
+  periodToggleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  periodToggleBtn: {
+    flex: 1,
+    height: 42,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodToggleBtnActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#38BDF8',
+  },
+  periodToggleText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  periodToggleTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  quickTimePresetsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  quickPresetChip: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: RADIUS.sm,
+    paddingVertical: 7,
+    alignItems: 'center',
+  },
+  quickPresetChipText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  confirmTimeBtn: {
+    height: 46,
+    backgroundColor: '#0284C7',
+    borderRadius: RADIUS.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  confirmTimeBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#070B14',

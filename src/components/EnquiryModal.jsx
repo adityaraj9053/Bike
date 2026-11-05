@@ -9,10 +9,21 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Linking,
+  Platform,
 } from 'react-native';
-import { X, MessageCircle, Send, CheckCircle2 } from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
+import { X, Send, CheckCircle2, ShieldCheck, Calendar, Phone, User, MessageSquare, Clock, Check } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { BIKES_DATA } from '../data/bikes';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
+
+function WhatsAppSvgIcon({ size = 20, color = '#FFFFFF' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 20.16C10.57 20.16 9.12 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.8 7.37 7.5 3.67 12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.05 20.16ZM16.57 14.39C16.32 14.27 15.1 13.67 14.88 13.58C14.65 13.5 14.49 13.46 14.32 13.7C14.16 13.95 13.69 14.51 13.54 14.67C13.4 14.84 13.25 14.86 13 14.74C12.75 14.61 11.95 14.35 11 13.5C10.26 12.84 9.76 12.03 9.61 11.78C9.47 11.54 9.6 11.4 9.72 11.28C9.83 11.17 9.97 10.99 10.09 10.85C10.22 10.71 10.26 10.61 10.34 10.45C10.42 10.28 10.38 10.14 10.32 10.02C10.26 9.9 9.77 8.7 9.57 8.21C9.37 7.73 9.17 7.79 9.02 7.78C8.88 7.78 8.71 7.77 8.55 7.77C8.38 7.77 8.12 7.83 7.89 8.08C7.67 8.32 7.03 8.92 7.03 10.14C7.03 11.36 7.92 12.54 8.04 12.7C8.16 12.87 9.79 15.37 12.28 16.44C12.87 16.7 13.33 16.85 13.69 16.97C14.29 17.16 14.83 17.13 15.26 17.07C15.74 17 16.74 16.47 16.95 15.89C17.15 15.3 17.15 14.8 17.09 14.7C17.03 14.6 16.82 14.51 16.57 14.39Z" />
+    </Svg>
+  );
+}
 
 export default function EnquiryModal({
   visible,
@@ -20,6 +31,7 @@ export default function EnquiryModal({
   selectedBike,
   onShowToast,
 }) {
+  const { t } = useTranslation();
   const [bikeId, setBikeId] = useState(selectedBike?.id || BIKES_DATA[0].id);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -34,30 +46,57 @@ export default function EnquiryModal({
     }
   }, [selectedBike]);
 
+  useEffect(() => {
+    if (!visible) {
+      setFullName('');
+      setPhone('');
+      setStartDate('');
+      setEndDate('');
+      setMessage('');
+      setSubmitted(false);
+    }
+  }, [visible]);
+
   const currentBike = BIKES_DATA.find((b) => b.id === bikeId) || BIKES_DATA[0];
 
   const handleWhatsAppRedirect = () => {
+    const flexibleStr = t('enquiryModal.flexible', 'Flexible');
+    const riderStr = t('enquiryModal.rider', 'Rider');
+    const notProvidedStr = t('enquiryModal.notProvided', 'Not provided');
+
     const text = encodeURIComponent(
       `Hello The Road Eagle! I would like to enquire about renting the ${currentBike.name} (${currentBike.model}).\n` +
-      `Dates: ${startDate || 'Flexible'} to ${endDate || 'Flexible'}\n` +
-      `My Name: ${fullName || 'Rider'}\n` +
-      `Phone: ${phone || 'Not provided'}\n` +
+      `Dates: ${startDate || flexibleStr} to ${endDate || flexibleStr}\n` +
+      `My Name: ${fullName || riderStr}\n` +
+      `Phone: ${phone || notProvidedStr}\n` +
       (message ? `Note: ${message}` : '')
     );
     Linking.openURL(`https://wa.me/919876543210?text=${text}`).catch(() => {});
-    if (onShowToast) onShowToast(`Redirecting to WhatsApp for ${currentBike.name}!`);
+    if (onShowToast) {
+      onShowToast(
+        t('enquiryModal.openingWhatsAppToast', {
+          bikeName: currentBike.name,
+          defaultValue: `Opening WhatsApp concierge for ${currentBike.name}!`,
+        })
+      );
+    }
     onClose();
   };
 
   const handleSubmit = () => {
     setSubmitted(true);
     if (onShowToast) {
-      onShowToast(`Enquiry received for ${currentBike.name}! Our team will call you shortly.`);
+      onShowToast(
+        t('enquiryModal.submittedToast', {
+          bikeName: currentBike.name,
+          defaultValue: `Enquiry received for ${currentBike.name}! Our concierge will connect with you shortly.`,
+        })
+      );
     }
     setTimeout(() => {
       setSubmitted(false);
       onClose();
-    }, 2000);
+    }, 2200);
   };
 
   return (
@@ -67,148 +106,235 @@ export default function EnquiryModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.modalCard, SHADOWS.card]}>
-              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <X size={18} color={COLORS.textSecondary} />
-              </TouchableOpacity>
+      <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.backdrop} />
+        </TouchableWithoutFeedback>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={styles.header}>
-                  <View style={styles.iconCircle}>
-                    <MessageCircle size={26} color={COLORS.accentCyan} />
-                  </View>
-                  <Text style={styles.title}>Enquire on WhatsApp</Text>
-                  <Text style={styles.subtitle}>
-                    Instant response from our concierge (+91 98765 43210)
-                  </Text>
+        <View style={[styles.modalCard, SHADOWS.card]}>
+          {/* Close Button */}
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={onClose}
+            activeOpacity={0.7}
+            accessibilityLabel="Close"
+          >
+            <X size={18} color="#94A3B8" />
+          </TouchableOpacity>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Header with WhatsApp Luxury Pill */}
+            <View style={styles.header}>
+              <View style={styles.waIconCircle}>
+                <WhatsAppSvgIcon size={26} color="#FFFFFF" />
+              </View>
+              <Text style={styles.title}>{t('enquiryModal.headerTitle', 'WhatsApp Concierge')}</Text>
+              <Text style={styles.subtitle}>
+                {t('enquiryModal.headerSubtitle', 'Direct instant assistance & custom rental quotes with our team')}
+              </Text>
+              <View style={styles.supportBadge}>
+                <View style={styles.pulseDot} />
+                <Text style={styles.supportBadgeText}>
+                  {t('enquiryModal.verifiedSupport', '+91 98765 43210 • 24/7 Verified Support')}
+                </Text>
+              </View>
+            </View>
+
+            {submitted ? (
+              <View style={styles.submittedWrap}>
+                <View style={styles.checkCircle}>
+                  <CheckCircle2 size={40} color="#10B981" />
                 </View>
-
-                {submitted ? (
-                  <View style={styles.submittedWrap}>
-                    <CheckCircle2 size={48} color={COLORS.statusAvailable} />
-                    <Text style={styles.submittedTitle}>Enquiry Submitted!</Text>
-                    <Text style={styles.submittedSubtitle}>
-                      We have received your enquiry for {currentBike.name}. A representative will connect with you right away.
+                <Text style={styles.submittedTitle}>
+                  {t('enquiryModal.submittedTitle', 'Enquiry Submitted!')}
+                </Text>
+                <Text style={styles.submittedSubtitle}>
+                  {t('enquiryModal.submittedSubtitle', {
+                    bikeName: currentBike.name,
+                    defaultValue: `We have received your enquiry for ${currentBike.name}. Our concierge will message or call you shortly.`,
+                  })}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.form}>
+                {/* Machine Selector Section */}
+                <View style={styles.sectionWrap}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Text style={styles.sectionLabel}>
+                      {t('enquiryModal.chooseMotorcycle', 'CHOOSE MOTORCYCLE')}
+                    </Text>
+                    <Text style={styles.sectionHint}>
+                      {t('enquiryModal.selected', 'Selected')}: {currentBike.name}
                     </Text>
                   </View>
-                ) : (
-                  <View style={styles.form}>
-                    {/* Bike Selector Chips */}
-                    <Text style={styles.label}>Select Motorcycle</Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      style={styles.bikeChipsScroll}
-                      contentContainerStyle={styles.bikeChipsContent}
-                    >
-                      {BIKES_DATA.map((b) => {
-                        const active = b.id === bikeId;
-                        return (
-                          <TouchableOpacity
-                            key={b.id}
-                            style={[styles.bikeChip, active && styles.bikeChipActive]}
-                            onPress={() => setBikeId(b.id)}
-                            activeOpacity={0.8}
-                          >
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.bikeChipsContent}
+                  >
+                    {BIKES_DATA.map((b) => {
+                      const active = b.id === bikeId;
+                      return (
+                        <TouchableOpacity
+                          key={b.id}
+                          style={[styles.bikeChip, active && styles.bikeChipActive]}
+                          onPress={() => setBikeId(b.id)}
+                          activeOpacity={0.8}
+                        >
+                          <View style={styles.chipTopRow}>
+                            {active && <Check size={12} color="#10B981" style={{ marginRight: 4 }} />}
                             <Text style={[styles.bikeChipText, active && styles.bikeChipTextActive]}>
-                              {b.name} (₹{b.pricePerDay})
+                              {b.name}
                             </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
+                          </View>
+                          <Text style={[styles.bikeChipPrice, active && styles.bikeChipPriceActive]}>
+                            ₹{b.pricePerDay.toLocaleString()}{t('enquiryModal.perDay', '/day')}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
 
-                    {/* Rider info */}
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Full Name</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Your name"
-                        placeholderTextColor={COLORS.textMuted}
-                        value={fullName}
-                        onChangeText={setFullName}
-                      />
+                {/* Rider Inputs with Clean Placeholders Only */}
+                <View style={styles.inputsGrid}>
+                  <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                      <User size={13} color="#94A3B8" />
+                      <Text style={styles.label}>
+                        {t('enquiryModal.fullNameLabel', 'FULL NAME')}
+                      </Text>
                     </View>
-
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Contact Phone Number</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="+91 98765 43210"
-                        placeholderTextColor={COLORS.textMuted}
-                        keyboardType="phone-pad"
-                        value={phone}
-                        onChangeText={setPhone}
-                      />
-                    </View>
-
-                    {/* Dates */}
-                    <View style={styles.datesRow}>
-                      <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.label}>Start Date</Text>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="YYYY-MM-DD"
-                          placeholderTextColor={COLORS.textMuted}
-                          value={startDate}
-                          onChangeText={setStartDate}
-                        />
-                      </View>
-                      <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.label}>End Date</Text>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="YYYY-MM-DD"
-                          placeholderTextColor={COLORS.textMuted}
-                          value={endDate}
-                          onChangeText={setEndDate}
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Questions or Delivery Requirements</Text>
-                      <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Need doorstep delivery, extra helmets, or custom touring duration..."
-                        placeholderTextColor={COLORS.textMuted}
-                        multiline
-                        numberOfLines={3}
-                        value={message}
-                        onChangeText={setMessage}
-                      />
-                    </View>
-
-                    {/* WhatsApp CTA Button */}
-                    <TouchableOpacity
-                      style={styles.whatsAppBtn}
-                      onPress={handleWhatsAppRedirect}
-                      activeOpacity={0.8}
-                    >
-                      <MessageCircle size={18} color="#050B14" />
-                      <Text style={styles.whatsAppBtnText}>Send Enquiry on WhatsApp</Text>
-                    </TouchableOpacity>
-
-                    {/* Direct Submit */}
-                    <TouchableOpacity
-                      style={styles.submitBtn}
-                      onPress={handleSubmit}
-                      activeOpacity={0.8}
-                    >
-                      <Send size={16} color={COLORS.accentCyan} />
-                      <Text style={styles.submitBtnText}>Submit Lead Directly</Text>
-                    </TouchableOpacity>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t('enquiryModal.fullNamePlaceholder', 'Enter your full name')}
+                      placeholderTextColor="#475569"
+                      value={fullName}
+                      onChangeText={setFullName}
+                    />
                   </View>
-                )}
-              </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
+
+                  <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                      <Phone size={13} color="#94A3B8" />
+                      <Text style={styles.label}>
+                        {t('enquiryModal.phoneLabel', 'WHATSAPP PHONE NUMBER')}
+                      </Text>
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t('enquiryModal.phonePlaceholder', 'e.g. 9876543210')}
+                      placeholderTextColor="#475569"
+                      keyboardType="phone-pad"
+                      value={phone}
+                      onChangeText={setPhone}
+                      maxLength={15}
+                    />
+                  </View>
+
+                  {/* Dates Row - 2 Columns */}
+                  <View style={styles.datesRow}>
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
+                      <View style={styles.labelRow}>
+                        <Calendar size={13} color="#94A3B8" />
+                        <Text style={styles.label}>
+                          {t('enquiryModal.startDateLabel', 'START DATE')}
+                        </Text>
+                      </View>
+                      <TextInput
+                        style={styles.input}
+                        placeholder={t('enquiryModal.datePlaceholder', 'DD/MM/YYYY')}
+                        placeholderTextColor="#475569"
+                        value={startDate}
+                        onChangeText={setStartDate}
+                      />
+                    </View>
+
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
+                      <View style={styles.labelRow}>
+                        <Calendar size={13} color="#94A3B8" />
+                        <Text style={styles.label}>
+                          {t('enquiryModal.returnDateLabel', 'RETURN DATE')}
+                        </Text>
+                      </View>
+                      <TextInput
+                        style={styles.input}
+                        placeholder={t('enquiryModal.datePlaceholder', 'DD/MM/YYYY')}
+                        placeholderTextColor="#475569"
+                        value={endDate}
+                        onChangeText={setEndDate}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Message Field */}
+                  <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                      <MessageSquare size={13} color="#94A3B8" />
+                      <Text style={styles.label}>
+                        {t('enquiryModal.specialReqsLabel', 'SPECIAL REQUIREMENTS (OPTIONAL)')}
+                      </Text>
+                    </View>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      placeholder={t(
+                        'enquiryModal.specialReqsPlaceholder',
+                        'Need extra helmet, doorstep delivery, or custom touring advice...'
+                      )}
+                      placeholderTextColor="#475569"
+                      multiline
+                      numberOfLines={3}
+                      value={message}
+                      onChangeText={setMessage}
+                    />
+                  </View>
+                </View>
+
+                {/* Actions Container - Properly Sized Buttons */}
+                <View style={styles.actionContainer}>
+                  {/* WhatsApp Primary CTA Button - Refined Luxury Green */}
+                  <TouchableOpacity
+                    style={styles.whatsAppBtn}
+                    onPress={handleWhatsAppRedirect}
+                    activeOpacity={0.85}
+                  >
+                    <WhatsAppSvgIcon size={19} color="#FFFFFF" />
+                    <Text style={styles.whatsAppBtnText}>
+                      {t('enquiryModal.sendWhatsAppBtn', 'Send Enquiry on WhatsApp')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Secondary Direct Submit Button - Elegant Understated Outline */}
+                  <TouchableOpacity
+                    style={styles.submitBtn}
+                    onPress={handleSubmit}
+                    activeOpacity={0.8}
+                  >
+                    <Send size={14} color="#38BDF8" />
+                    <Text style={styles.submitBtnText}>
+                      {t('enquiryModal.requestCallbackBtn', 'Request Callback Instead')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Trust Badge */}
+                  <View style={styles.trustFooter}>
+                    <ShieldCheck size={13} color="#10B981" />
+                    <Text style={styles.trustText}>
+                      {t(
+                        'enquiryModal.trustFooter',
+                        'Instant response • Zero spam • Verified Road Eagle fleet'
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          </ScrollView>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
@@ -216,17 +342,33 @@ export default function EnquiryModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: COLORS.bgOverlay,
+    backgroundColor: 'rgba(5, 11, 20, 0.82)',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 16,
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   modalCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.xl,
+    backgroundColor: '#0C1322',
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: COLORS.borderCard,
-    padding: 20,
-    maxHeight: '92%',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 24,
+    paddingTop: 22,
+    paddingBottom: 22,
+    width: '94%',
+    maxWidth: 500,
+    maxHeight: '90%',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.65,
+    shadowRadius: 30,
+    elevation: 12,
+  },
+  scrollContent: {
+    paddingBottom: 4,
   },
   closeBtn: {
     position: 'absolute',
@@ -234,137 +376,250 @@ const styles = StyleSheet.create({
     right: 14,
     width: 32,
     height: 32,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bgCardAlt,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
+    zIndex: 20,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
+    paddingTop: 2,
   },
-  iconCircle: {
+  waIconCircle: {
     width: 48,
     height: 48,
-    borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(0, 163, 255, 0.12)',
+    borderRadius: 24,
+    backgroundColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(167, 243, 208, 0.45)',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 5,
   },
   title: {
     fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
+    fontWeight: '900',
+    color: '#FFFFFF',
     marginBottom: 4,
+    letterSpacing: -0.3,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: '#94A3B8',
     textAlign: 'center',
+    maxWidth: 380,
+    lineHeight: 17,
+    marginBottom: 8,
+  },
+  supportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  supportBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#34D399',
+    letterSpacing: 0.2,
   },
   form: {
     gap: 14,
   },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-    marginBottom: 6,
+  sectionWrap: {
+    marginBottom: 2,
   },
-  bikeChipsScroll: {
-    marginBottom: 6,
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#38BDF8',
+    letterSpacing: 0.8,
+  },
+  sectionHint: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#94A3B8',
   },
   bikeChipsContent: {
     gap: 8,
+    paddingVertical: 2,
   },
   bikeChip: {
-    backgroundColor: COLORS.bgCardAlt,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: RADIUS.full,
+    paddingVertical: 8,
+    borderRadius: 10,
+    minWidth: 115,
   },
   bikeChipActive: {
-    backgroundColor: COLORS.accentCyan,
-    borderColor: COLORS.accentCyan,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: '#10B981',
+  },
+  chipTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   bikeChipText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#E2E8F0',
   },
   bikeChipTextActive: {
-    color: '#050B14',
-    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  inputGroup: {},
+  bikeChipPrice: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  bikeChipPriceActive: {
+    color: '#34D399',
+  },
+  inputsGrid: {
+    gap: 10,
+  },
+  inputGroup: {
+    gap: 4,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.8,
+  },
   input: {
-    backgroundColor: COLORS.bgCardAlt,
+    backgroundColor: '#070C15',
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: COLORS.textPrimary,
-    fontSize: 13,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    color: '#FFFFFF',
+    fontSize: 12.5,
   },
   textArea: {
-    height: 70,
+    minHeight: 58,
     textAlignVertical: 'top',
+    paddingTop: 8,
   },
   datesRow: {
     flexDirection: 'row',
     gap: 10,
   },
+  actionContainer: {
+    gap: 8,
+    marginTop: 4,
+  },
   whatsAppBtn: {
-    backgroundColor: COLORS.accentCyan,
+    backgroundColor: '#10B981',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: RADIUS.full,
-    paddingVertical: 13,
-    marginTop: 6,
+    paddingVertical: 11,
+    borderRadius: 12,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   whatsAppBtnText: {
-    color: '#050B14',
-    fontSize: 14,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   submitBtn: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
     borderWidth: 1,
-    borderColor: COLORS.borderCard,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderRadius: RADIUS.full,
-    paddingVertical: 11,
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
   },
   submitBtnText: {
-    color: COLORS.accentCyan,
-    fontSize: 13,
+    color: '#38BDF8',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  trustFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  trustText: {
+    fontSize: 9.5,
+    color: '#64748B',
     fontWeight: '600',
   },
   submittedWrap: {
     alignItems: 'center',
-    paddingVertical: 30,
-    gap: 10,
+    paddingVertical: 36,
+    paddingHorizontal: 16,
+  },
+  checkCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(16, 185, 129, 0.35)',
   },
   submittedTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
+    fontSize: 19,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginBottom: 8,
   },
   submittedSubtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
+    fontSize: 12.5,
+    color: '#94A3B8',
     textAlign: 'center',
     lineHeight: 18,
-    paddingHorizontal: 16,
+    maxWidth: 320,
   },
 });

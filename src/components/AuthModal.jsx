@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,19 +11,9 @@ import {
   ScrollView,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import {
-  X,
-  ShieldCheck,
-  AlertCircle,
-  CheckCircle2,
-  Mail,
-  Clock,
-  RotateCcw,
-  ArrowLeft,
-} from 'lucide-react-native';
+import { X, ShieldCheck, Mail, Calendar, AlertTriangle, ArrowRight, ChevronDown } from 'lucide-react-native';
 import { COLORS, RADIUS, SHADOWS } from '../theme/colors';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from './LanguageSwitcher';
 
 function GoogleIcon({ size = 18 }) {
   return (
@@ -48,562 +38,263 @@ function GoogleIcon({ size = 18 }) {
   );
 }
 
+// Generate Day, Month, Year arrays
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const MONTHS = [
+  { value: '01', label: 'Jan (01)' },
+  { value: '02', label: 'Feb (02)' },
+  { value: '03', label: 'Mar (03)' },
+  { value: '04', label: 'Apr (04)' },
+  { value: '05', label: 'May (05)' },
+  { value: '06', label: 'Jun (06)' },
+  { value: '07', label: 'Jul (07)' },
+  { value: '08', label: 'Aug (08)' },
+  { value: '09', label: 'Sep (09)' },
+  { value: '10', label: 'Oct (10)' },
+  { value: '11', label: 'Nov (11)' },
+  { value: '12', label: 'Dec (12)' },
+];
+
+const currentYear = new Date().getFullYear();
+// Rider years from currentYear - 16 down
+const YEARS = Array.from({ length: 75 }, (_, i) => String(currentYear - 16 - i));
+
 export default function AuthModal({
   visible,
-  isOpen,
   onClose,
   onLogin,
   user,
 }) {
-  const { t } = useTranslation();
-  const isModalVisible = visible !== undefined ? visible : Boolean(isOpen);
-  const otpInputRef = useRef(null);
-
+  const { t, i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState('signin'); // 'signin' | 'signup'
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [ageVerified, setAgeVerified] = useState(false);
-  const [showAgePrompt, setShowAgePrompt] = useState(false);
-  const [underAgeError, setUnderAgeError] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null); // 'google' | 'signup_toggle' | 'signup_submit'
 
-  // Forgot Password State
-  // const [showForgotPassword, setShowForgotPassword] = useState(false);
-  // const [resetEmail, setResetEmail] = useState('');
-  // const [resetEmailError, setResetEmailError] = useState('');
-  // const [resetEmailSent, setResetEmailSent] = useState(false);
+  // Structured Date of Birth Selection
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
+  const [activeDobPicker, setActiveDobPicker] = useState(null); // 'day' | 'month' | 'year' | null
 
-  // OTP Verification State
-  const [showOtpPage, setShowOtpPage] = useState(false);
   const [otp, setOtp] = useState('');
-  const [otpTimer, setOtpTimer] = useState(30);
-  const [otpError, setOtpError] = useState('');
-  const [otpResent, setOtpResent] = useState(false);
-  const [emailError, setEmailError] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
 
-  // Reset modal state on open or user login/out
-  useEffect(() => {
-    if (isModalVisible && !user) {
-      setIsSignUp(false);
-      setShowAgePrompt(false);
-      setUnderAgeError(false);
-      setPendingAction(null);
-      setShowOtpPage(false);
-      // setShowForgotPassword(false);
-      // setResetEmail('');
-      // setResetEmailError('');
-      // setResetEmailSent(false);
-      setOtp('');
-      setOtpError('');
-      setOtpResent(false);
-      setEmailError('');
-    }
-  }, [isModalVisible, user]);
+  // Localized Month Label
+  const getMonthLabel = (m) => {
+    if (!m) return '';
+    const isHi = i18n?.language?.startsWith('hi');
+    const hiMonths = [
+      'जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून',
+      'जुलाई', 'अगस्त', 'सितम्बर', 'अक्टूबर', 'नवम्बर', 'दिसम्बर'
+    ];
+    const idx = parseInt(m.value, 10) - 1;
+    return isHi && hiMonths[idx] ? `${hiMonths[idx]} (${m.value})` : m.label;
+  };
 
-  // OTP Countdown Timer
-  useEffect(() => {
-    let interval = null;
-    if (showOtpPage && otpTimer > 0) {
-      interval = setInterval(() => {
-        setOtpTimer((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [showOtpPage, otpTimer]);
-
-  const handleModalClose = () => {
-    setShowAgePrompt(false);
-    setUnderAgeError(false);
-    setPendingAction(null);
-    setShowOtpPage(false);
-    // setShowForgotPassword(false);
-    // setResetEmail('');
-    // setResetEmailError('');
-    // setResetEmailSent(false);
+  // Reset all fields
+  const resetAllFields = () => {
+    setEmail('');
+    setName('');
+    setDobDay('');
+    setDobMonth('');
+    setDobYear('');
+    setActiveDobPicker(null);
     setOtp('');
-    setOtpError('');
-    setOtpResent(false);
-    setEmailError('');
-    setIsSignUp(false);
-    onClose();
+    setOtpSent(false);
+    setErrorMsg('');
+    setInfoMsg('');
+    setActiveTab('signin');
   };
 
-  // const handleSendResetLink = () => {
-  //   setResetEmailError('');
-  //   if (!resetEmail.trim()) {
-  //     setResetEmailError(t('authModal.emailPlaceholder') ? 'Please enter your email address.' : 'Please enter your email address.');
-  //     return;
-  //   }
-  //   if (!resetEmail.includes('@') || !resetEmail.includes('.')) {
-  //     setResetEmailError('Please enter a valid email address.');
-  //     return;
-  //   }
-  //   setResetEmailSent(true);
-  // };
-
-  const proceedGoogleLogin = () => {
-    onLogin({
-      name: 'Rider Alex',
-      email: 'alex.rider@example.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
-    });
-    handleModalClose();
+  const resetOtpOnly = () => {
+    setOtp('');
+    setOtpSent(false);
+    setErrorMsg('');
+    setInfoMsg('');
   };
 
-  const handleGoogleClick = () => {
-    if (ageVerified) {
-      proceedGoogleLogin();
-    } else {
-      setPendingAction('google');
-      setUnderAgeError(false);
-      setShowAgePrompt(true);
+  useEffect(() => {
+    if (!user) {
+      resetAllFields();
     }
+  }, [user]);
+
+  useEffect(() => {
+    resetOtpOnly();
+    if (!visible && !user) {
+      resetAllFields();
+    }
+  }, [visible, user]);
+
+  const handleTabSwitch = (tab) => {
+    setActiveTab(tab);
+    resetOtpOnly();
   };
 
-  const proceedEmailSubmit = (userName, userEmail) => {
-    const finalEmail = userEmail || email;
-    if (!finalEmail) return;
-    onLogin({
-      name: (userName !== undefined ? userName : name) || finalEmail.split('@')[0],
-      email: finalEmail,
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
-    });
-    handleModalClose();
+  // Exact age calculation logic from Day, Month, Year
+  const calculateAge = (d, m, y) => {
+    if (!d || !m || !y) return 0;
+    const today = new Date();
+    const birthDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
-  const handleEmailSubmit = () => {
-    setEmailError('');
-    if (!email.trim()) {
-      setEmailError('Please enter your email address.');
+  const validateEmail = (emailStr) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(String(emailStr || '').trim().toLowerCase());
+  };
+
+  const handleSendCode = () => {
+    setErrorMsg('');
+    setOtp('');
+
+    if (!email || !validateEmail(email)) {
+      setErrorMsg(
+        t('authModal.errorValidEmail', 'Please enter a valid email address (e.g. name@example.com)')
+      );
       return;
     }
-    if (!email.includes('@') || !email.includes('.')) {
-      setEmailError('Please enter a valid email address.');
-      return;
-    }
 
-    if (isSignUp) {
-      if (!ageVerified) {
-        setPendingAction('signup_submit');
-        setUnderAgeError(false);
-        setShowAgePrompt(true);
+    if (activeTab === 'signup') {
+      if (!name.trim()) {
+        setErrorMsg(t('authModal.errorName', 'Please enter your full name.'));
         return;
       }
-      // Open OTP verification page
-      setShowOtpPage(true);
-      setOtp('');
-      setOtpTimer(30);
-      setOtpError('');
-      setOtpResent(false);
-      return;
-    }
 
-    proceedEmailSubmit();
-  };
+      if (!dobDay || !dobMonth || !dobYear) {
+        setErrorMsg(
+          t('authModal.errorDob', 'Please select Day, Month and Year of your Date of Birth.')
+        );
+        return;
+      }
 
-  const handleToggleMode = () => {
-    setEmailError('');
-    if (isSignUp) {
-      setIsSignUp(false);
-      setShowOtpPage(false);
-    } else {
-      if (ageVerified) {
-        setIsSignUp(true);
-      } else {
-        setPendingAction('signup_toggle');
-        setUnderAgeError(false);
-        setShowAgePrompt(true);
+      const riderAge = calculateAge(dobDay, dobMonth, dobYear);
+
+      if (riderAge < 18) {
+        setErrorMsg(
+          t('authModal.errorUnderage', {
+            age: riderAge,
+            defaultValue: `Underage (${riderAge} yrs): Registration is strictly restricted to riders aged 18+ with a valid license.`,
+          })
+        );
+        return;
       }
     }
+
+    setOtpSent(true);
+    setInfoMsg(
+      t('authModal.infoOtpSent', {
+        email,
+        defaultValue: `Verification code sent to ${email}! (Demo Code: 1234)`,
+      })
+    );
   };
 
-  const handleAgeYes = () => {
-    setAgeVerified(true);
-    setShowAgePrompt(false);
-    setUnderAgeError(false);
-
-    const action = pendingAction;
-    setPendingAction(null);
-
-    if (action === 'google') {
-      proceedGoogleLogin();
-    } else if (action === 'signup_toggle') {
-      setIsSignUp(true);
-    } else if (action === 'signup_submit') {
-      // Proceed to OTP page
-      setShowOtpPage(true);
-      setOtp('');
-      setOtpTimer(30);
-      setOtpError('');
-      setOtpResent(false);
-    } else {
-      setIsSignUp(true);
-    }
-  };
-
-  const handleAgeNo = () => {
-    setShowAgePrompt(false);
-    setUnderAgeError(true);
-    setPendingAction(null);
-  };
-
-  const handleBackFromOtp = () => {
-    setShowOtpPage(false);
+  const handleVerifyAndSubmit = () => {
+    setErrorMsg('');
+    const submittedOtp = (otp || '').trim();
     setOtp('');
-    setOtpError('');
-    setOtpResent(false);
-  };
 
-  const handleResendOtp = () => {
-    setOtpTimer(30);
-    setOtp('');
-    setOtpError('');
-    setOtpResent(true);
-    setTimeout(() => {
-      setOtpResent(false);
-    }, 3000);
-  };
-
-  const handleOtpChange = (val) => {
-    const cleaned = val.replace(/[^0-9]/g, '').slice(0, 4);
-    setOtp(cleaned);
-    if (otpError) setOtpError('');
-    if (cleaned.length === 4) {
-      setTimeout(() => {
-        proceedEmailSubmit();
-      }, 350);
-    }
-  };
-
-  const handleVerifyOtp = () => {
-    if (otp.length < 4) {
-      setOtpError('Please enter the complete 4-digit OTP code.');
+    if (!submittedOtp || submittedOtp.length < 4) {
+      setErrorMsg(
+        t('authModal.errorEnter4Digits', 'Please enter the 4-digit verification code.')
+      );
       return;
     }
-    proceedEmailSubmit();
+
+    if (submittedOtp !== '1234') {
+      setErrorMsg(
+        t('authModal.errorInvalidOtp', 'Invalid OTP code! Please enter 1234.')
+      );
+      return;
+    }
+
+    const formattedDob = dobDay && dobMonth && dobYear ? `${dobYear}-${dobMonth}-${dobDay}` : '';
+
+    let newUser = null;
+    if (activeTab === 'signin') {
+      newUser = {
+        name: email.split('@')[0],
+        email: email.trim(),
+        loginMethod: 'email',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
+      };
+    } else {
+      newUser = {
+        name: name.trim(),
+        email: email.trim(),
+        dob: formattedDob,
+        loginMethod: 'email',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
+      };
+    }
+
+    resetAllFields();
+    if (onLogin) onLogin(newUser);
+    if (onClose) onClose();
+  };
+
+  const handleGoogleLogin = () => {
+    const googleUser = {
+      name: 'Google Rider',
+      email: 'rider.google@gmail.com',
+      dob: '1998-05-12',
+      loginMethod: 'google',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
+    };
+    resetAllFields();
+    if (onLogin) onLogin(googleUser);
+    if (onClose) onClose();
   };
 
   const handleSignOut = () => {
-    onLogin(null);
-    setIsSignUp(false);
-    setAgeVerified(false);
-    setEmail('');
-    setName('');
-    handleModalClose();
+    resetAllFields();
+    if (onLogin) onLogin(null);
+    if (onClose) onClose();
   };
 
   return (
     <Modal
-      visible={isModalVisible}
-      transparent
+      visible={visible}
       animationType="fade"
-      onRequestClose={handleModalClose}
+      transparent
+      onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={handleModalClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={[styles.modalCard, SHADOWS.card]}>
-              <View style={styles.modalHeaderRow}>
-                <LanguageSwitcher compact />
-                <TouchableOpacity style={styles.closeBtn} onPress={handleModalClose} activeOpacity={0.8}>
-                  <X size={18} color={COLORS.textSecondary} />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={onClose}
+                activeOpacity={0.7}
+              >
+                <X size={18} color="#94A3B8" />
+              </TouchableOpacity>
 
-              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-                {showOtpPage ? (
-                  /* OTP Verification View */
-                  <View style={styles.otpContainer}>
-                    <TouchableOpacity
-                      style={styles.otpBackBtn}
-                      onPress={handleBackFromOtp}
-                      activeOpacity={0.7}
-                    >
-                      <ArrowLeft size={16} color={COLORS.textSecondary} />
-                      <Text style={styles.otpBackBtnText}>{t('authModal.backToSignIn')}</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.otpBadgeCircle}>
-                      <Mail size={28} color={COLORS.accentCyan} />
-                    </View>
-
-                    <Text style={styles.modalTitle}>{t('authModal.otpTitle')}</Text>
-                    <Text style={styles.modalSubtitle}>
-                      {t('authModal.otpSubtitle')}{'\n'}
-                      <Text style={styles.otpTargetEmail}>{email}</Text>
-                    </Text>
-
-                    {/* 4 Digit Boxes with touchable focus */}
-                    <TouchableOpacity
-                      activeOpacity={1}
-                      style={styles.otpInputWrapper}
-                      onPress={() => otpInputRef.current?.focus()}
-                    >
-                      <View style={styles.otpBoxesRow}>
-                        {[0, 1, 2, 3].map((index) => {
-                          const digit = otp[index] || '';
-                          const isCurrent = otp.length === index;
-                          return (
-                            <View
-                              key={index}
-                              style={[
-                                styles.otpBox,
-                                digit ? styles.otpBoxFilled : null,
-                                isCurrent ? styles.otpBoxActive : null,
-                              ]}
-                            >
-                              <Text style={styles.otpDigitText}>{digit}</Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                      <TextInput
-                        ref={otpInputRef}
-                        style={styles.hiddenOtpInput}
-                        value={otp}
-                        onChangeText={handleOtpChange}
-                        keyboardType="number-pad"
-                        maxLength={4}
-                        autoFocus
-                      />
-                    </TouchableOpacity>
-
-                    {otpError ? (
-                      <View style={styles.otpErrorWrap}>
-                        <AlertCircle size={14} color={COLORS.statusBooked} />
-                        <Text style={styles.otpErrorText}>{otpError}</Text>
-                      </View>
-                    ) : null}
-
-                    {otpResent ? (
-                      <View style={styles.otpResentWrap}>
-                        <CheckCircle2 size={14} color={COLORS.statusAvailable} />
-                        <Text style={styles.otpResentText}>{t('authModal.otpResentSuccess')}</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.demoOtpWrap}>
-                        <Text style={styles.demoOtpText}>
-                          {t('authModal.demoOtpHint')}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Timer / Resend Row */}
-                    <View style={styles.timerRow}>
-                      {otpTimer > 0 ? (
-                        <View style={styles.timerCountWrap}>
-                          <Clock size={15} color={COLORS.textMuted} />
-                          <Text style={styles.timerCountText}>
-                            {t('authModal.resendOtpIn', { timer: otpTimer < 10 ? `0${otpTimer}` : otpTimer })}
-                          </Text>
-                        </View>
-                      ) : (
-                        <TouchableOpacity
-                          style={styles.resendBtn}
-                          onPress={handleResendOtp}
-                          activeOpacity={0.8}
-                        >
-                          <RotateCcw size={15} color={COLORS.accentCyan} />
-                          <Text style={styles.resendBtnText}>{t('authModal.resendOtp')}</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-
-                    {/* Verify & Complete CTA */}
-                    <TouchableOpacity
-                      style={[
-                        styles.submitBtn,
-                        otp.length === 4 ? null : styles.submitBtnDisabled,
-                      ]}
-                      onPress={handleVerifyOtp}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.submitBtnText}>{t('authModal.verifyAndComplete')}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.changeEmailBtn}
-                      onPress={handleBackFromOtp}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.changeEmailText}>
-                        {t('authModal.wrongEmail')}{' '}
-                        <Text style={{ color: COLORS.accentCyan, fontWeight: '600' }}>
-                          {t('authModal.changeEmail')}
-                        </Text>
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : showAgePrompt ? (
-                  /* Age Verification Prompt View */
-                  <View style={styles.agePromptContainer}>
-                    <View style={styles.ageBadgeCircle}>
-                      <Text style={styles.ageBadgeNumber}>18+</Text>
-                    </View>
-
-                    <Text style={styles.modalTitle}>{t('authModal.areYou18')}</Text>
-                    <Text style={styles.modalSubtitle}>
-                      {t('authModal.agePolicyDesc')}
-                    </Text>
-
-                    <View style={styles.ageActionsContainer}>
-                      <TouchableOpacity
-                        style={styles.ageYesBtn}
-                        onPress={handleAgeYes}
-                        activeOpacity={0.85}
-                      >
-                        <CheckCircle2 size={18} color="#050B14" />
-                        <Text style={styles.ageYesBtnText}>{t('authModal.yes18')}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.ageNoBtn}
-                        onPress={handleAgeNo}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.ageNoBtnText}>{t('authModal.noUnder18')}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.cancelLink}
-                        onPress={() => {
-                          setShowAgePrompt(false);
-                          setPendingAction(null);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.cancelLinkText}>{t('authModal.cancel')}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ) : underAgeError ? (
-                  /* Under-age Restriction View */
-                  <View style={styles.agePromptContainer}>
-                    <View style={[styles.ageBadgeCircle, styles.ageBadgeRestricted]}>
-                      <AlertCircle size={32} color={COLORS.statusBooked} />
-                    </View>
-
-                    <Text style={styles.modalTitle}>{t('authModal.ageNotMetTitle')}</Text>
-                    <Text style={styles.modalSubtitle}>
-                      {t('authModal.ageNotMetDesc')}
-                    </Text>
-
-                    <View style={styles.underAgeActionsContainer}>
-                      <TouchableOpacity
-                        style={styles.underAgeBackBtn}
-                        onPress={() => {
-                          setUnderAgeError(false);
-                          setPendingAction(null);
-                          setIsSignUp(false);
-                          handleModalClose();
-                        }}
-                        activeOpacity={0.85}
-                      >
-                        <Text style={styles.underAgeBackBtnText}>{t('authModal.ok')}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                // ) : showForgotPassword ? (
-                //   /* Forgot Password View */
-                //   <View style={styles.forgotPasswordContainer}>
-                //     <TouchableOpacity
-                //       style={styles.otpBackBtn}
-                //       onPress={() => {
-                //         setShowForgotPassword(false);
-                //         setResetEmailSent(false);
-                //       }}
-                //       activeOpacity={0.7}
-                //     >
-                //       <ArrowLeft size={16} color={COLORS.textSecondary} />
-                //       <Text style={styles.otpBackBtnText}>{t('authModal.backToSignIn')}</Text>
-                //     </TouchableOpacity>
-
-                //     <View style={styles.otpBadgeCircle}>
-                //       <RotateCcw size={26} color={COLORS.accentCyan} />
-                //     </View>
-
-                //     <Text style={styles.modalTitle}>{t('authModal.resetPasswordTitle')}</Text>
-                //     <Text style={styles.modalSubtitle}>{t('authModal.resetPasswordSubtitle')}</Text>
-
-                //     {resetEmailSent ? (
-                //       <View style={styles.resetSuccessWrap}>
-                //         <CheckCircle2 size={44} color={COLORS.statusAvailable} style={{ marginBottom: 12 }} />
-                //         <Text style={styles.resetSuccessTitle}>{t('authModal.resetSentTitle')}</Text>
-                //         <Text style={styles.resetSuccessDesc}>
-                //           {t('authModal.resetSentDesc', { email: resetEmail })}
-                //         </Text>
-                //         <TouchableOpacity
-                //           style={[styles.submitBtn, { marginTop: 24, width: '100%' }]}
-                //           onPress={() => {
-                //             setShowForgotPassword(false);
-                //             setResetEmailSent(false);
-                //           }}
-                //           activeOpacity={0.85}
-                //         >
-                //           <Text style={styles.submitBtnText}>{t('authModal.backToSignIn')}</Text>
-                //         </TouchableOpacity>
-                //       </View>
-                //     ) : (
-                //       <View style={{ width: '100%', marginTop: 8 }}>
-                //         <View style={styles.inputGroup}>
-                //           <Text style={styles.inputLabel}>{t('authModal.emailAddress')}</Text>
-                //           <TextInput
-                //             style={[
-                //               styles.textInput,
-                //               resetEmailError ? { borderColor: COLORS.statusBooked } : null,
-                //             ]}
-                //             placeholder={t('authModal.emailPlaceholder')}
-                //             placeholderTextColor={COLORS.textMuted}
-                //             keyboardType="email-address"
-                //             autoCapitalize="none"
-                //             value={resetEmail}
-                //             onChangeText={(val) => {
-                //               setResetEmail(val);
-                //               if (resetEmailError) setResetEmailError('');
-                //             }}
-                //           />
-                //           {resetEmailError ? (
-                //             <Text style={styles.fieldErrorText}>{resetEmailError}</Text>
-                //           ) : null}
-                //         </View>
-
-                //         <TouchableOpacity
-                //           style={styles.submitBtn}
-                //           onPress={handleSendResetLink}
-                //           activeOpacity={0.85}
-                //         >
-                //           <Text style={styles.submitBtnText}>{t('authModal.sendResetLink')}</Text>
-                //         </TouchableOpacity>
-
-                //         <TouchableOpacity
-                //           style={styles.toggleModeBtn}
-                //           onPress={() => {
-                //             setShowForgotPassword(false);
-                //             setResetEmailSent(false);
-                //           }}
-                //           activeOpacity={0.7}
-                //         >
-                //           <Text style={styles.toggleModeText}>{t('authModal.backToSignIn')}</Text>
-                //         </TouchableOpacity>
-                //       </View>
-                //     )}
-                //   </View>
-                ) : user ? (
-                  /* Profile / Logged In View */
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {user ? (
+                  /* Logged-In User Profile View */
                   <View style={styles.profileContainer}>
-                    <Image
-                      source={{ uri: user.avatar }}
-                      style={styles.avatarImage}
-                    />
-                    <Text style={styles.welcomeText}>{t('authModal.welcomeBack')}</Text>
-                    <Text style={styles.userNameText}>{user.name}!</Text>
+                    <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                    <Text style={styles.welcomeText}>
+                      {t('authModal.loggedIn', 'Logged In')}
+                    </Text>
+                    <Text style={styles.userNameText}>{user.name}</Text>
                     <Text style={styles.userEmailText}>{user.email}</Text>
 
                     <View style={styles.verifiedBadge}>
-                      <ShieldCheck size={16} color={COLORS.accentCyan} />
-                      <Text style={styles.verifiedText}>{t('authModal.verifiedRider')}</Text>
+                      <ShieldCheck size={16} color={COLORS.statusAvailable} />
+                      <Text style={styles.verifiedBadgeText}>
+                        {t('authModal.verifiedBadge', '18+ Verified Rider Account')}
+                      </Text>
                     </View>
 
                     <TouchableOpacity
@@ -611,120 +302,309 @@ export default function AuthModal({
                       onPress={handleSignOut}
                       activeOpacity={0.8}
                     >
-                      <Text style={styles.signOutText}>{t('authModal.signOut')}</Text>
+                      <Text style={styles.signOutText}>
+                        {t('authModal.signOut', 'Sign Out')}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  /* Sign In / Sign Up View */
+                  /* Auth Form View */
                   <View>
+                    {/* Sign In vs Sign Up Tabs */}
+                    <View style={styles.tabBar}>
+                      <TouchableOpacity
+                        style={[styles.tabItem, activeTab === 'signin' && styles.tabItemActive]}
+                        onPress={() => handleTabSwitch('signin')}
+                      >
+                        <Text style={[styles.tabText, activeTab === 'signin' && styles.tabTextActive]}>
+                          {t('authModal.tabSignIn', 'Sign In')}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.tabItem, activeTab === 'signup' && styles.tabItemActive]}
+                        onPress={() => handleTabSwitch('signup')}
+                      >
+                        <Text style={[styles.tabText, activeTab === 'signup' && styles.tabTextActive]}>
+                          {t('authModal.tabSignUp', 'Sign Up (18+)')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
                     <Text style={styles.modalTitle}>
-                      {isSignUp ? t('authModal.createAccountTitle') : t('authModal.signInTitle')}
+                      {activeTab === 'signup'
+                        ? t('authModal.createAccountTitle', 'Create 18+ Rider Account')
+                        : t('authModal.signInTitle', 'Welcome to The Road Eagle')}
                     </Text>
                     <Text style={styles.modalSubtitle}>
-                      {isSignUp
-                        ? t('authModal.createAccountSubtitle')
-                        : t('authModal.signInSubtitle')}
+                      {activeTab === 'signup'
+                        ? t(
+                            'authModal.createAccountSubtitle',
+                            'Select Day, Month & Year of Birth. Age will be strictly verified before booking.'
+                          )
+                        : t(
+                            'authModal.signInSubtitle',
+                            'Quick passwordless sign in via Email OTP.'
+                          )}
                     </Text>
 
-                    {isSignUp && ageVerified && (
-                      <View style={styles.ageVerifiedPill}>
-                        <ShieldCheck size={14} color={COLORS.statusAvailable} />
-                        <Text style={styles.ageVerifiedPillText}>{t('authModal.ageVerifiedPill')}</Text>
+                    {errorMsg ? (
+                      <View style={styles.errorBox}>
+                        <AlertTriangle size={16} color={COLORS.accentRed} />
+                        <Text style={styles.errorText}>{errorMsg}</Text>
                       </View>
-                    )}
+                    ) : null}
 
-                    {/* Google OAuth Button */}
-                    <TouchableOpacity
-                      style={styles.googleBtn}
-                      onPress={handleGoogleClick}
-                      activeOpacity={0.85}
-                    >
-                      <GoogleIcon size={18} />
-                      <Text style={styles.googleBtnText}>{t('authModal.continueGoogle')}</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.dividerRow}>
-                      <View style={styles.dividerLine} />
-                      <Text style={styles.dividerText}>{t('authModal.or')}</Text>
-                      <View style={styles.dividerLine} />
-                    </View>
-
-                    {/* Inputs */}
-                    {isSignUp && (
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>{t('authModal.fullName')}</Text>
-                        <TextInput
-                          style={styles.textInput}
-                          placeholder={t('authModal.namePlaceholder')}
-                          placeholderTextColor={COLORS.textMuted}
-                          value={name}
-                          onChangeText={setName}
-                        />
+                    {infoMsg && !otpSent ? (
+                      <View style={styles.infoBox}>
+                        <Text style={styles.infoText}>{infoMsg}</Text>
                       </View>
-                    )}
+                    ) : null}
 
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>{t('authModal.emailAddress')}</Text>
-                      <TextInput
-                        style={[
-                          styles.textInput,
-                          emailError ? { borderColor: COLORS.statusBooked } : null,
-                        ]}
-                        placeholder={t('authModal.emailPlaceholder')}
-                        placeholderTextColor={COLORS.textMuted}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        value={email}
-                        onChangeText={(val) => {
-                          setEmail(val);
-                          if (emailError) setEmailError('');
-                        }}
-                      />
-                      {emailError ? (
-                        <Text style={styles.fieldErrorText}>{emailError}</Text>
-                      ) : null}
-                    </View>
+                    {!otpSent ? (
+                      /* Form: Name, Email, DOB Selectors */
+                      <View>
+                        {activeTab === 'signup' && (
+                          <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>
+                              {t('authModal.fullName', 'FULL NAME')}
+                            </Text>
+                            <TextInput
+                              style={styles.textInput}
+                              placeholder={t('authModal.namePlaceholder', 'e.g. Rahul Verma')}
+                              placeholderTextColor="#475569"
+                              value={name}
+                              onChangeText={setName}
+                            />
+                          </View>
+                        )}
 
-                    {/* Forgot Password link (Sign In mode only) */}
-                    {/* {!isSignUp && (
-                      <View style={styles.forgotPasswordRow}>
+                        <View style={styles.inputGroup}>
+                          <Text style={styles.inputLabel}>
+                            {t('authModal.emailAddress', 'EMAIL ADDRESS')}
+                          </Text>
+                          <TextInput
+                            style={styles.textInput}
+                            placeholder={t('authModal.emailPlaceholder', 'e.g. rahul@example.com')}
+                            placeholderTextColor="#475569"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                          />
+                        </View>
+
+                        {activeTab === 'signup' && (
+                          <View style={styles.inputGroup}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                              <Calendar size={14} color="#38BDF8" />
+                              <Text style={styles.inputLabel}>
+                                {t('authModal.dobLabel', 'DATE OF BIRTH (18+ MANDATORY)')}
+                              </Text>
+                            </View>
+
+                            {/* 3 Separate Dropdown Selectors for Day, Month, Year */}
+                            <View style={styles.dobSelectorsRow}>
+                              {/* Day Selector */}
+                              <TouchableOpacity
+                                style={[styles.dobSelectBox, activeDobPicker === 'day' && styles.dobSelectBoxActive]}
+                                onPress={() => setActiveDobPicker(activeDobPicker === 'day' ? null : 'day')}
+                                activeOpacity={0.8}
+                              >
+                                <Text style={dobDay ? styles.dobValueText : styles.dobPlaceholderText}>
+                                  {dobDay ? `${t('authModal.day', 'Day')} ${dobDay}` : t('authModal.day', 'Day')}
+                                </Text>
+                                <ChevronDown size={14} color="#94A3B8" />
+                              </TouchableOpacity>
+
+                              {/* Month Selector */}
+                              <TouchableOpacity
+                                style={[styles.dobSelectBox, activeDobPicker === 'month' && styles.dobSelectBoxActive, { flex: 1.3 }]}
+                                onPress={() => setActiveDobPicker(activeDobPicker === 'month' ? null : 'month')}
+                                activeOpacity={0.8}
+                              >
+                                <Text style={dobMonth ? styles.dobValueText : styles.dobPlaceholderText}>
+                                  {dobMonth
+                                    ? getMonthLabel(MONTHS.find((m) => m.value === dobMonth)) || dobMonth
+                                    : t('authModal.month', 'Month')}
+                                </Text>
+                                <ChevronDown size={14} color="#94A3B8" />
+                              </TouchableOpacity>
+
+                              {/* Year Selector */}
+                              <TouchableOpacity
+                                style={[styles.dobSelectBox, activeDobPicker === 'year' && styles.dobSelectBoxActive, { flex: 1.2 }]}
+                                onPress={() => setActiveDobPicker(activeDobPicker === 'year' ? null : 'year')}
+                                activeOpacity={0.8}
+                              >
+                                <Text style={dobYear ? styles.dobValueText : styles.dobPlaceholderText}>
+                                  {dobYear || t('authModal.year', 'Year')}
+                                </Text>
+                                <ChevronDown size={14} color="#94A3B8" />
+                              </TouchableOpacity>
+                            </View>
+
+                            {/* Expanded Selection List inside Modal */}
+                            {activeDobPicker === 'day' && (
+                              <View style={styles.pickerDropdownContainer}>
+                                <Text style={styles.pickerDropdownHeader}>
+                                  {t('authModal.selectDay', 'Select Birth Day')}
+                                </Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
+                                  {DAYS.map((d) => (
+                                    <TouchableOpacity
+                                      key={d}
+                                      style={[styles.pickerItemChip, dobDay === d && styles.pickerItemChipActive]}
+                                      onPress={() => {
+                                        setDobDay(d);
+                                        setActiveDobPicker(dobMonth ? (dobYear ? null : 'year') : 'month');
+                                      }}
+                                    >
+                                      <Text style={[styles.pickerItemText, dobDay === d && styles.pickerItemTextActive]}>{d}</Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </ScrollView>
+                              </View>
+                            )}
+
+                            {activeDobPicker === 'month' && (
+                              <View style={styles.pickerDropdownContainer}>
+                                <Text style={styles.pickerDropdownHeader}>
+                                  {t('authModal.selectMonth', 'Select Birth Month')}
+                                </Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
+                                  {MONTHS.map((m) => (
+                                    <TouchableOpacity
+                                      key={m.value}
+                                      style={[styles.pickerItemChip, dobMonth === m.value && styles.pickerItemChipActive]}
+                                      onPress={() => {
+                                        setDobMonth(m.value);
+                                        setActiveDobPicker(dobYear ? null : 'year');
+                                      }}
+                                    >
+                                      <Text style={[styles.pickerItemText, dobMonth === m.value && styles.pickerItemTextActive]}>
+                                        {getMonthLabel(m)}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </ScrollView>
+                              </View>
+                            )}
+
+                            {activeDobPicker === 'year' && (
+                              <View style={styles.pickerDropdownContainer}>
+                                <Text style={styles.pickerDropdownHeader}>
+                                  {t('authModal.selectYear', 'Select Birth Year')}
+                                </Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
+                                  {YEARS.map((y) => (
+                                    <TouchableOpacity
+                                      key={y}
+                                      style={[styles.pickerItemChip, dobYear === y && styles.pickerItemChipActive]}
+                                      onPress={() => {
+                                        setDobYear(y);
+                                        setActiveDobPicker(null);
+                                      }}
+                                    >
+                                      <Text style={[styles.pickerItemText, dobYear === y && styles.pickerItemTextActive]}>{y}</Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </ScrollView>
+                              </View>
+                            )}
+
+                            <Text style={styles.dobHelper}>
+                              {t(
+                                'authModal.dobHelper',
+                                'Age must be strictly 18 or above to rent and drive motorbikes.'
+                              )}
+                            </Text>
+                          </View>
+                        )}
+
                         <TouchableOpacity
-                          style={styles.forgotPasswordBtn}
-                          onPress={() => {
-                            setShowForgotPassword(true);
-                            setResetEmail(email);
-                            setResetEmailError('');
-                            setResetEmailSent(false);
-                          }}
-                          activeOpacity={0.7}
+                          style={styles.submitBtn}
+                          onPress={handleSendCode}
+                          activeOpacity={0.85}
                         >
-                          <Text style={styles.forgotPasswordText}>{t('authModal.forgotPassword')}</Text>
+                          <Text style={styles.submitBtnText}>
+                            {activeTab === 'signup'
+                              ? t('authModal.verifyAgeSendOtpBtn', 'Verify Age & Send OTP')
+                              : t('authModal.sendOtpBtn', 'Send Email OTP')}
+                          </Text>
+                          <ArrowRight size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+
+                        <View style={styles.dividerRow}>
+                          <View style={styles.dividerLine} />
+                          <Text style={styles.dividerText}>
+                            {t('authModal.or', 'OR')}
+                          </Text>
+                          <View style={styles.dividerLine} />
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.googleBtn}
+                          onPress={handleGoogleLogin}
+                          activeOpacity={0.85}
+                        >
+                          <GoogleIcon size={18} />
+                          <Text style={styles.googleBtnText}>
+                            {t('authModal.continueGoogle', 'Continue with Google')}
+                          </Text>
                         </TouchableOpacity>
                       </View>
-                    )} */}
+                    ) : (
+                      /* OTP Verification Screen */
+                      <View>
+                        <View style={styles.otpBanner}>
+                          <Text style={styles.otpBannerText}>
+                            {t('authModal.otpSentBanner', '18+ Verified! OTP sent to')}{' '}
+                            <Text style={{ fontWeight: '800' }}>{email}</Text>
+                          </Text>
+                        </View>
 
-                    <TouchableOpacity
-                      style={styles.submitBtn}
-                      onPress={handleEmailSubmit}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.submitBtnText}>
-                        {isSignUp ? t('authModal.signUpBtn') : t('authModal.signInBtn')}
-                      </Text>
-                    </TouchableOpacity>
+                        <View style={styles.inputGroup}>
+                          <Text style={styles.inputLabel}>
+                            {t('authModal.enterOtpLabel', 'ENTER 4-DIGIT EMAIL OTP')}
+                          </Text>
+                          <TextInput
+                            style={[styles.textInput, styles.otpInput]}
+                            placeholder="• • • •"
+                            placeholderTextColor="#475569"
+                            value={otp}
+                            onChangeText={(tVal) => setOtp(tVal.replace(/\D/g, '').slice(0, 4))}
+                            keyboardType="number-pad"
+                            maxLength={4}
+                            autoFocus
+                          />
+                        </View>
 
-                    {/* Toggle Mode */}
-                    <TouchableOpacity
-                      style={styles.toggleModeBtn}
-                      onPress={handleToggleMode}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.toggleModeText}>
-                        {isSignUp
-                          ? t('authModal.haveAccountSignIn')
-                          : t('authModal.dontHaveAccountSignUp')}
-                      </Text>
-                    </TouchableOpacity>
+                        <View style={styles.otpLinksRow}>
+                          <TouchableOpacity onPress={() => setOtp('1234')}>
+                            <Text style={styles.otpDemoLink}>
+                              {t('authModal.fillDemoCode', 'Fill Demo Code (1234)')}
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => resetOtpOnly()}>
+                            <Text style={styles.otpChangeLink}>
+                              {t('authModal.changeEmail', 'Change Email')}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.submitBtn}
+                          onPress={handleVerifyAndSubmit}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.submitBtnText}>
+                            {t('authModal.verifyOtpBtn', 'Verify OTP & Continue')}
+                          </Text>
+                          <ArrowRight size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 )}
               </ScrollView>
@@ -745,297 +625,267 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modalCard: {
-    backgroundColor: '#0D1524',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#1E293B',
-    padding: 24,
-    paddingTop: 20,
-    width: 440,
-    maxWidth: '100%',
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.6,
-    shadowRadius: 32,
-    elevation: 20,
-  },
-  modalHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
     width: '100%',
-    zIndex: 10,
+    maxWidth: 440,
+    backgroundColor: '#0F172A',
+    borderRadius: RADIUS.xl,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'relative',
   },
   closeBtn: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
     width: 32,
     height: 32,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
-  // },
-  // forgotPasswordRow: {
-  //   alignItems: 'flex-end',
-  //   marginTop: -6,
-  //   marginBottom: 16,
-  // },
-  // forgotPasswordBtn: {
-  //   paddingVertical: 4,
-  //   paddingHorizontal: 2,
-  // },
-  // forgotPasswordText: {
-  //   color: COLORS.accentCyan || '#00A3FF',
-  //   fontSize: 13,
-  //   fontWeight: '600',
-  // },
-  // forgotPasswordContainer: {
-  //   alignItems: 'center',
-  //   paddingTop: 4,
-  // },
-  // resetSuccessWrap: {
-  //   alignItems: 'center',
-  //   paddingVertical: 18,
-  //   width: '100%',
-  // },
-  // resetSuccessTitle: {
-  //   fontSize: 18,
-  //   fontWeight: '800',
-  //   color: '#FFFFFF',
-  //   marginBottom: 8,
-  //   textAlign: 'center',
-  // },
-  // resetSuccessDesc: {
-  //   fontSize: 13,
-  //   color: '#94A3B8',
-  //   textAlign: 'center',
-  //   lineHeight: 20,
-  //   paddingHorizontal: 8,
+    zIndex: 10,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: RADIUS.full,
+    padding: 4,
+    marginBottom: 20,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: 'center',
+    borderRadius: RADIUS.full,
+  },
+  tabItemActive: {
+    backgroundColor: '#0284C7',
+  },
+  tabText: {
+    color: COLORS.textSecondary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 8,
-    marginTop: 4,
-    letterSpacing: -0.3,
+    color: COLORS.textPrimary,
+    marginBottom: 6,
   },
   modalSubtitle: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    lineHeight: 18,
+    marginBottom: 18,
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(225, 29, 72, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(225, 29, 72, 0.35)',
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 14,
+  },
+  errorText: {
+    color: '#FDA4AF',
+    fontSize: 12.5,
+    flex: 1,
+  },
+  infoBox: {
+    backgroundColor: 'rgba(2, 132, 199, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 14,
+  },
+  infoText: {
+    color: '#38BDF8',
+    fontSize: 12.5,
+  },
+  inputGroup: {
+    marginBottom: 14,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.textSecondary,
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  textInput: {
+    height: 46,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
+    color: COLORS.textPrimary,
     fontSize: 13.5,
-    color: '#94A3B8',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-    paddingHorizontal: 8,
   },
-  agePromptContainer: {
-    paddingVertical: 12,
+  dobSelectorsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dobSelectBox: {
+    flex: 1,
+    height: 46,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  ageBadgeCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: 'rgba(0, 163, 255, 0.12)',
-    borderWidth: 2,
-    borderColor: '#00A3FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 16,
-    marginTop: 4,
+  dobSelectBoxActive: {
+    borderColor: '#38BDF8',
+    backgroundColor: 'rgba(2, 132, 199, 0.15)',
   },
-  ageBadgeNumber: {
-    color: '#00A3FF',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+  dobValueText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
-  ageBadgeRestricted: {
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderColor: '#EF4444',
+  dobPlaceholderText: {
+    color: '#475569',
+    fontSize: 13,
   },
-  ageActionsContainer: {
-    width: '100%',
+  pickerDropdownContainer: {
+    backgroundColor: '#1E293B',
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    padding: 10,
     marginTop: 8,
   },
-  ageYesBtn: {
-    backgroundColor: '#00A3FF',
+  pickerDropdownHeader: {
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  pickerItemChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: RADIUS.full,
-    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pickerItemChipActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#38BDF8',
+  },
+  pickerItemText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  pickerItemTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  dobHelper: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    marginTop: 5,
+  },
+  submitBtn: {
+    height: 46,
+    backgroundColor: '#0284C7',
+    borderRadius: RADIUS.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 12,
-    shadowColor: '#00A3FF',
+    marginTop: 8,
+    shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  ageYesBtnText: {
-    color: '#050B14',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  ageNoBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: RADIUS.full,
-    paddingVertical: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  ageNoBtnText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  cancelLink: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  cancelLinkText: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  ageVerifiedPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: RADIUS.full,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  ageVerifiedPillText: {
-    color: COLORS.statusAvailable,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  underAgeActionsContainer: {
-    width: '100%',
-    marginTop: 10,
-  },
-  underAgeBackBtn: {
-    width: '100%',
-    backgroundColor: '#00A3FF',
-    borderRadius: RADIUS.full,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#00A3FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  underAgeBackBtnText: {
-    color: '#050B14',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  googleBtn: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.full,
-    paddingVertical: 13,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 20,
-  },
-  googleBtnText: {
-    color: '#050B14',
-    fontSize: 15,
+  submitBtnText: {
+    color: '#FFFFFF',
     fontWeight: '700',
+    fontSize: 14,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 12,
+    marginVertical: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   dividerText: {
-    color: '#64748B',
+    color: COLORS.textMuted,
     fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    color: '#94A3B8',
-    fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    marginBottom: 8,
+    paddingHorizontal: 12,
   },
-  textInput: {
-    backgroundColor: '#090F1A',
+  googleBtn: {
+    height: 46,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: '#1E293B',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    color: COLORS.textPrimary,
-    fontSize: 14,
-  },
-  fieldErrorText: {
-    color: COLORS.statusBooked,
-    fontSize: 12,
-    marginTop: 6,
-    marginLeft: 2,
-    fontWeight: '500',
-  },
-  submitBtn: {
-    width: '100%',
-    backgroundColor: '#00A3FF',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: RADIUS.full,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
-    marginBottom: 16,
-    shadowColor: '#00A3FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
+    gap: 10,
   },
-  submitBtnText: {
-    color: '#050B14',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  toggleModeBtn: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  toggleModeText: {
-    color: '#00A3FF',
+  googleBtnText: {
+    color: '#FFFFFF',
     fontSize: 13.5,
+    fontWeight: '600',
+  },
+  otpBanner: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderRadius: RADIUS.md,
+    padding: 12,
+    marginBottom: 16,
+  },
+  otpBannerText: {
+    color: '#34D399',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  otpInput: {
+    textAlign: 'center',
+    fontSize: 22,
+    letterSpacing: 10,
+    fontWeight: '800',
+  },
+  otpLinksRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  otpDemoLink: {
+    color: '#38BDF8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  otpChangeLink: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
     fontWeight: '600',
   },
   profileContainer: {
@@ -1051,143 +901,22 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   welcomeText: {
-    fontSize: 14,
     color: COLORS.textSecondary,
+    fontSize: 13,
+    marginBottom: 2,
   },
   userNameText: {
-    fontSize: 22,
-    fontWeight: '800',
     color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: '800',
     marginBottom: 4,
   },
   userEmailText: {
-    fontSize: 13,
     color: COLORS.textMuted,
+    fontSize: 13,
     marginBottom: 16,
   },
   verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0, 163, 255, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: RADIUS.full,
-    marginBottom: 24,
-  },
-  verifiedText: {
-    color: COLORS.accentCyan,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  signOutBtn: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: COLORS.statusBooked,
-    borderRadius: RADIUS.full,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  signOutText: {
-    color: COLORS.statusBooked,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  /* OTP Screen Styles */
-  otpContainer: {
-    paddingVertical: 6,
-    alignItems: 'center',
-    width: '100%',
-  },
-  otpBackBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-    paddingVertical: 4,
-  },
-  otpBackBtnText: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  otpBadgeCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(0, 163, 255, 0.12)',
-    borderWidth: 2,
-    borderColor: '#00A3FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 14,
-    marginTop: 2,
-  },
-  otpTargetEmail: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  otpInputWrapper: {
-    width: '100%',
-    position: 'relative',
-    marginVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  otpBoxesRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    width: '100%',
-  },
-  otpBox: {
-    width: 56,
-    height: 60,
-    borderRadius: 14,
-    backgroundColor: '#090F1A',
-    borderWidth: 1.5,
-    borderColor: '#1E293B',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  otpBoxActive: {
-    borderColor: '#00A3FF',
-    backgroundColor: 'rgba(0, 163, 255, 0.05)',
-  },
-  otpBoxFilled: {
-    borderColor: '#38BDF8',
-  },
-  otpDigitText: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  hiddenOtpInput: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.01,
-    fontSize: 1,
-    color: 'transparent',
-  },
-  otpErrorWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  otpErrorText: {
-    color: COLORS.statusBooked,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  otpResentWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -1197,55 +926,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: RADIUS.full,
-    marginBottom: 10,
+    marginBottom: 24,
   },
-  otpResentText: {
+  verifiedBadgeText: {
     color: COLORS.statusAvailable,
     fontSize: 12,
-    fontWeight: '600',
-  },
-  demoOtpWrap: {
-    marginBottom: 10,
-  },
-  demoOtpText: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 10,
-  },
-  timerCountWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  timerCountText: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  resendBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  resendBtnText: {
-    color: COLORS.accentCyan,
-    fontSize: 13.5,
     fontWeight: '700',
   },
-  changeEmailBtn: {
-    alignItems: 'center',
-    paddingVertical: 10,
+  signOutBtn: {
+    paddingVertical: 11,
+    paddingHorizontal: 28,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
-  changeEmailText: {
-    color: COLORS.textSecondary,
+  signOutText: {
+    color: '#EF4444',
     fontSize: 13,
+    fontWeight: '700',
   },
 });
